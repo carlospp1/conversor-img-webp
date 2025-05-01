@@ -15,6 +15,9 @@ const tempDir = os.tmpdir();
 const uploadsDir = path.join(__dirname, '../../public/uploads');
 const zipDir = path.join(__dirname, '../../public/zip');
 
+// Registro de archivos zip con su timestamp para control
+const zipFiles = new Map();
+
 // Asegurar que los directorios existan
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
@@ -22,6 +25,76 @@ if (!fs.existsSync(uploadsDir)) {
 if (!fs.existsSync(zipDir)) {
   fs.mkdirSync(zipDir, { recursive: true });
 }
+
+// Iniciar limpieza periódica de archivos ZIP
+cleanupZipFiles();
+
+// Función para limpiar periódicamente archivos ZIP antiguos
+function cleanupZipFiles() {
+  try {
+    console.log('Iniciando limpieza periódica de archivos ZIP...');
+    
+    if (fs.existsSync(zipDir)) {
+      const files = fs.readdirSync(zipDir);
+      const now = Date.now();
+      
+      for (const file of files) {
+        if (file.endsWith('.zip')) {
+          const filePath = path.join(zipDir, file);
+          const stats = fs.statSync(filePath);
+          const fileAge = now - stats.mtimeMs;
+          
+          // Eliminar archivos de más de 30 minutos
+          if (fileAge > 30 * 60 * 1000) {
+            try {
+              fs.unlinkSync(filePath);
+              console.log(`Archivo ZIP antiguo eliminado: ${file}`);
+            } catch (err) {
+              console.error(`Error al eliminar archivo ZIP antiguo ${file}:`, err);
+            }
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error en la limpieza periódica de archivos ZIP:', err);
+  } finally {
+    // Programar la siguiente limpieza en 15 minutos
+    setTimeout(cleanupZipFiles, 15 * 60 * 1000);
+  }
+}
+
+// Función para eliminar un archivo ZIP específico
+export const deleteZipFile = (req, res) => {
+  try {
+    const { filename } = req.params;
+    
+    if (!filename) {
+      return res.status(400).json({ error: 'Se requiere el nombre del archivo' });
+    }
+    
+    const zipFilePath = path.join(zipDir, filename);
+    
+    // Verificar que el archivo exista
+    if (!fs.existsSync(zipFilePath)) {
+      return res.status(404).json({ error: 'El archivo ZIP no existe' });
+    }
+    
+    // Eliminar el archivo
+    fs.unlinkSync(zipFilePath);
+    console.log(`Archivo ZIP eliminado tras descarga: ${filename}`);
+    
+    // Eliminar del registro si existe
+    if (zipFiles.has(filename)) {
+      zipFiles.delete(filename);
+    }
+    
+    return res.status(200).json({ success: true, message: 'Archivo ZIP eliminado correctamente' });
+  } catch (error) {
+    console.error('Error al eliminar archivo ZIP:', error);
+    return res.status(500).json({ error: `Error al eliminar el archivo ZIP: ${error.message}` });
+  }
+};
 
 // Función para crear un directorio temporal para cada proceso
 function createTempDir() {
@@ -210,23 +283,18 @@ export const convertMultipleToWebp = async (req, res) => {
       console.log('Archivo ZIP creado correctamente:', zipFilename);
       console.log('Tamaño total:', archive.pointer());
       
-      // Programar eliminación del archivo ZIP después de un tiempo
-      setTimeout(() => {
-        try {
-          if (fs.existsSync(zipFilePath)) {
-            fs.unlinkSync(zipFilePath);
-            console.log(`Archivo ZIP eliminado: ${zipFilename}`);
-          }
-        } catch (err) {
-          console.error('Error al eliminar archivo ZIP:', err);
-        }
-      }, 10 * 60 * 1000); // 10 minutos
+      // Registrar archivo ZIP para control
+      zipFiles.set(zipFilename, {
+        timestamp: Date.now(),
+        size: archive.pointer()
+      });
       
       // Enviar respuesta final al cliente
       const response = JSON.stringify({
         success: true,
         message: `${totalFiles} imágenes convertidas correctamente`,
         zipUrl: `/zip/${zipFilename}`,
+        zipFilename: zipFilename,
         totalSize: archive.pointer()
       });
       

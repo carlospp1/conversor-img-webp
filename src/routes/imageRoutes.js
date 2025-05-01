@@ -44,4 +44,7 @@ router.post('/convert-multiple', upload.array('images'), imageController.convert
 // Ruta para obtener todas las imágenes convertidas
 router.get('/images', imageController.getConvertedImages);
 
+// Ruta para eliminar un archivo ZIP después de la descarga
+router.delete('/zip/:filename', imageController.deleteZipFile);
+
 export default router; 

@@ -183,6 +183,8 @@
       // Array para almacenar los archivos seleccionados
       let selectedFiles = [];
       
+      let currentZipFilename = ''; // Variable para almacenar el nombre del archivo ZIP actual
+      
       // Configuración del rango de calidad
       qualityRangeMultiple.addEventListener('input', function() {
         qualityValueMultiple.textContent = this.value;
@@ -354,6 +356,9 @@
                             resultMessageMultiple.textContent = `${selectedFiles.length} imágenes convertidas con calidad ${quality}.`;
                             downloadZipBtn.href = data.zipUrl;
                             downloadZipBtn.style.display = 'inline-block';
+                            
+                            // Guardar el nombre del archivo ZIP para eliminarlo después
+                            currentZipFilename = data.zipFilename;
                           } else {
                             document.querySelector('#resultContainer .alert').className = 'alert alert-danger';
                             document.querySelector('#resultContainer .alert-heading').textContent = '¡Error!';
@@ -391,11 +396,51 @@
         });
       });
       
+      // Evento para eliminar el archivo ZIP después de descargarlo
+      downloadZipBtn.addEventListener('click', function() {
+        // Esperar un momento para asegurar que la descarga comience
+        setTimeout(() => {
+          if (currentZipFilename) {
+            // Eliminar el archivo del servidor
+            fetch(`/api/zip/${currentZipFilename}`, {
+              method: 'DELETE'
+            })
+            .then(response => {
+              if (response.ok) {
+                console.log(`Archivo ZIP ${currentZipFilename} eliminado del servidor`);
+              } else {
+                console.error(`Error al eliminar el archivo ZIP ${currentZipFilename}`);
+              }
+            })
+            .catch(error => {
+              console.error('Error en la solicitud de eliminación:', error);
+            });
+          }
+        }, 3000); // Dar tiempo para que comience la descarga antes de eliminar
+      });
+      
       // Nueva conversión
       newConversionMultipleBtn.addEventListener('click', function() {
         selectedFiles = [];
         previewGrid.innerHTML = '';
         updateFileCounter();
+        
+        // Eliminar el archivo ZIP si existe
+        if (currentZipFilename) {
+          fetch(`/api/zip/${currentZipFilename}`, {
+            method: 'DELETE'
+          })
+          .then(response => {
+            if (response.ok) {
+              console.log(`Archivo ZIP ${currentZipFilename} eliminado al iniciar nueva conversión`);
+            }
+          })
+          .catch(error => {
+            console.error('Error al eliminar el archivo ZIP:', error);
+          });
+          
+          currentZipFilename = '';
+        }
         
         loadingContainer.style.display = 'none';
         resultContainer.style.display = 'none';
