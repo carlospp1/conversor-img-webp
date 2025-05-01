@@ -5,15 +5,10 @@
   "private": true,
   "scripts": {
     "start": "node app.js",
-    "dev": "netlify dev",
-    "build": "npm run copy-assets",
-    "copy-assets": "cp -r public/* public/",
-    "netlify-dev": "netlify dev"
+    "dev": "nodemon app.js --ignore public/"
   },
   "devDependencies": {
-    "@netlify/functions": "^3.1.2",
     "@types/bun": "latest",
-    "netlify-cli": "^20.1.1",
     "nodemon": "^3.1.10"
   },
   "peerDependencies": {
@@ -21,7 +16,6 @@
   },
   "dependencies": {
     "archiver": "^7.0.1",
-    "busboy": "^1.6.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "multer": "^1.4.5-lts.2",

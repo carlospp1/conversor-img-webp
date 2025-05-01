@@ -207,8 +207,7 @@
         convertBtn.disabled = true;
         convertBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Convirtiendo...';
         
-        // Usar la función serverless en lugar de la API
-        fetch('/.netlify/functions/convert', {
+        fetch('/api/convert', {
           method: 'POST',
           body: formData
         })
