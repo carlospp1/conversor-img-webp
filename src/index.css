@@ -1,0 +1,251 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark;
+  color: rgba(0, 0, 0, 0.87);
+  background-color: #f8f9fa;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header {
+  background-color: #4299e1;
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.main-nav {
+  display: flex;
+  justify-content: center;
+}
+
+.nav-item {
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-item.active {
+  background-color: rgba(255, 255, 255, 0.2);
+  font-weight: 600;
+}
+
+.main-content {
+  flex: 1;
+  padding: 2rem 0;
+}
+
+#root {
+  width: 100%;
+}
+
+.container {
+  margin: 0 auto;
+  padding: 0 2rem;
+  max-width: 800px;
+  width: 100%;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #333;
+  font-size: 2rem;
+}
+
+/* Estilos para DropZone */
+.drop-zone {
+  border: 2px dashed #4299e1;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-bottom: 1rem;
+}
+
+.drop-zone:hover, .drop-zone.active {
+  border-color: #2b6cb0;
+  background-color: #f7fafc;
+}
+
+/* Estilos para QualityControl */
+.quality-control {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.quality-text {
+  margin-bottom: 0.5rem;
+}
+
+.quality-slider {
+  width: 100%;
+  cursor: pointer;
+}
+
+/* Estilos para ImagePreview */
+.image-preview {
+  background-color: #f2f2f2;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.image-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.preview-item {
+  position: relative;
+  background-color: white;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  margin-bottom: 1rem;
+}
+
+.image-preview-grid .preview-item {
+  margin-bottom: 0;
+}
+
+.preview-image {
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+}
+
+.image-preview-grid .preview-image {
+  height: 150px;
+  object-fit: cover;
+}
+
+.remove-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background-color: #e53e3e;
+  color: white;
+  border: none;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.preview-info {
+  padding: 0.5rem;
+  border-top: 1px solid #edf2f7;
+}
+
+.file-name {
+  font-size: 0.875rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+
+.file-size {
+  font-size: 0.75rem;
+  color: #718096;
+  margin: 0.25rem 0 0 0;
+}
+
+/* Barra de progreso */
+.progress-container {
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+.progress-bar {
+  height: 10px;
+  background-color: #e2e8f0;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #4299e1;
+  border-radius: 5px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 0.875rem;
+  color: #4a5568;
+}
+
+/* Botón de convertir */
+.button-container {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.convert-button {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background-color: #4299e1;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.convert-button:hover {
+  background-color: #3182ce;
+}
+
+.convert-button:disabled {
+  background-color: #cbd5e0;
+  cursor: not-allowed;
+}
+
+/* Responsive grid */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 1rem;
+  }
+  
+  .image-preview-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+} 

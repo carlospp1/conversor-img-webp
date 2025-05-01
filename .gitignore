@@ -1,52 +1,24 @@
-# Dependencias
-node_modules/
-package-lock.json
-
-# Archivos de entorno
-.env
-.env.local
-.env.*.local
-
-# Archivos de desarrollo
-.DS_Store
-Thumbs.db
-.idea/
-.vscode/
-*.sublime-project
-*.sublime-workspace
-
-# Archivos de log
+# Logs
 logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Directorios de subida y conversión de imágenes
-public/uploads/*
-public/converted/*
-!public/uploads/.gitkeep
-!public/converted/.gitkeep
-
-# output
-out
+node_modules
 dist
-*.tgz
+dist-ssr
+*.local
 
-# code coverage
-coverage
-*.lcov
-
-# logs
-report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
-
-# caches
-.eslintcache
-.cache
-*.tsbuildinfo
-
-# IntelliJ based IDEs
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
 .idea
-
-# Finder (MacOS) folder config
 .DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
