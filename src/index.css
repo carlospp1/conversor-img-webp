@@ -209,6 +209,13 @@ h1 {
 .progress-text {
   font-size: 0.875rem;
   color: #4a5568;
+  margin-bottom: 0.25rem;
+}
+
+.progress-details {
+  font-size: 0.75rem;
+  color: #718096;
+  font-weight: 500;
 }
 
 /* Botón de convertir */

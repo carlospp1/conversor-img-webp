@@ -35,21 +35,63 @@ export const useImageConverter = (initialQuality = 75) => {
   const convertMultiple = async (files, onProgress) => {
     const zip = new JSZip();
     const results = [];
+    
+    // Configuración para el ZIP con compresión mínima para mayor velocidad
+    const zipOptions = {
+      type: 'blob',
+      compression: 'STORE', // Sin compresión para mayor velocidad
+      streamFiles: true,    // Mejora el rendimiento para archivos grandes
+    };
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      try {
-        // Notificar progreso si se proporcionó la función
-        if (onProgress) {
-          onProgress(i, file.name);
+    // Establecer el número máximo de conversiones concurrentes
+    const BATCH_SIZE = Math.min(4, navigator.hardwareConcurrency || 4);
+    
+    // Procesar archivos en lotes para no sobrecargar el navegador
+    for (let i = 0; i < files.length; i += BATCH_SIZE) {
+      const batch = files.slice(i, i + BATCH_SIZE);
+      
+      // Convertir múltiples imágenes en paralelo
+      const conversionPromises = batch.map(async (file, batchIndex) => {
+        const index = i + batchIndex;
+        try {
+          // Notificar progreso si se proporcionó la función
+          if (onProgress) {
+            onProgress(index, file.name);
+          }
+          
+          const blob = await convertToWebP(file);
+          const fileName = file.name.split('.').slice(0, -1).join('.') + '.webp';
+          
+          return {
+            index,
+            fileName,
+            blob,
+            success: true
+          };
+        } catch (error) {
+          return {
+            index,
+            fileName: file.name,
+            success: false,
+            error: error.message
+          };
         }
+      });
+      
+      // Esperar a que todas las conversiones del lote terminen
+      const batchResults = await Promise.all(conversionPromises);
+      
+      // Añadir resultados al array y al ZIP
+      for (const result of batchResults) {
+        results.push({
+          file: result.fileName,
+          success: result.success,
+          error: result.error
+        });
         
-        const blob = await convertToWebP(file);
-        const fileName = file.name.split('.').slice(0, -1).join('.') + '.webp';
-        zip.file(fileName, blob);
-        results.push({ file: fileName, success: true });
-      } catch (error) {
-        results.push({ file: file.name, success: false, error: error.message });
+        if (result.success) {
+          zip.file(result.fileName, result.blob);
+        }
       }
     }
 
@@ -58,7 +100,8 @@ export const useImageConverter = (initialQuality = 75) => {
       onProgress(files.length, 'Generando ZIP...');
     }
 
-    const content = await zip.generateAsync({ type: 'blob' });
+    // Generar el archivo ZIP con las opciones optimizadas
+    const content = await zip.generateAsync(zipOptions);
     return { blob: content, results };
   };
 
