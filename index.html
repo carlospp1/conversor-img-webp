@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Convertidor de Imágenes a WebP</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Convertidor de Imágenes a WebP</h1>
+        
+        <div class="quality-control">
+            <label for="quality">Calidad: <span id="quality-value">75</span>%</label>
+            <input type="range" id="quality" min="1" max="100" value="75">
+        </div>
+
+        <div id="drop-zone" class="drop-zone">
+            <p>Arrastra y suelta una imagen aquí o haz clic para seleccionar</p>
+        </div>
+
+        <div id="single-preview">
+            <div id="preview-container" class="preview-container"></div>
+        </div>
+
+        <div class="buttons">
+            <button id="convert-btn" class="btn">Convertir</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+    <script src="assets/js/layout.js" defer></script>
+    <script src="assets/js/imageConverter.js" defer></script>
+    <script src="assets/js/singleConverter.js" defer></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const converter = new ImageConverter();
+            const singleConverter = new SingleConverter(converter);
+            singleConverter.init();
+        });
+    </script>
+</body>
+</html> 

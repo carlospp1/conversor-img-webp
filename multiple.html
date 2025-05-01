@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Convertidor Múltiple de Imágenes a WebP</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Convertidor Múltiple de Imágenes a WebP</h1>
+        
+        <div class="quality-control">
+            <label for="quality">Calidad: <span id="quality-value">75</span>%</label>
+            <input type="range" id="quality" min="1" max="100" value="75">
+        </div>
+
+        <div id="drop-zone" class="drop-zone">
+            <p>Arrastra y suelta imágenes aquí o haz clic para seleccionar</p>
+        </div>
+
+        <div id="preview-container" class="preview-container"></div>
+
+        <div class="progress-container">
+            <div id="progress-bar" class="progress-bar"></div>
+            <span id="progress-text">0%</span>
+        </div>
+
+        <div class="buttons">
+            <button id="convert-btn" class="btn" disabled>Convertir</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+    <script src="assets/js/layout.js" defer></script>
+    <script src="assets/js/imageConverter.js" defer></script>
+    <script src="assets/js/multipleConverter.js" defer></script>
+    <script>
+        let multipleConverter;
+        document.addEventListener('DOMContentLoaded', () => {
+            const converter = new ImageConverter();
+            multipleConverter = new MultipleConverter(converter);
+            multipleConverter.init();
+        });
+    </script>
+</body>
+</html> 
