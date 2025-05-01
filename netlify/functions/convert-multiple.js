@@ -19,7 +19,7 @@ exports.handler = async (event, context) => {
     }
 
     // Límite máximo de imágenes (reducido para evitar problemas)
-    if (formData.images.length > 10) {
+    if (formData.images.length > 200) {
       return { 
         statusCode: 400, 
         body: JSON.stringify({ 
