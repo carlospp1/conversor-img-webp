@@ -301,8 +301,8 @@
         conversionProgress.style.width = '0%';
         conversionStatus.textContent = `Preparando ${selectedFiles.length} imágenes...`;
         
-        // Usar fetch con respuesta de stream para seguir el progreso
-        fetch('/api/convert-multiple', {
+        // Usar la función serverless en lugar de la API
+        fetch('/.netlify/functions/convert-multiple', {
           method: 'POST',
           body: formData
         })
@@ -310,79 +310,41 @@
           if (!response.ok) {
             throw new Error(`Error del servidor: ${response.status}`);
           }
-          
-          const reader = response.body.getReader();
-          let receivedLength = 0;
-          let chunks = [];
-          
-          // Función para procesar los datos de la respuesta
-          return new ReadableStream({
-            start(controller) {
-              function push() {
-                reader.read().then(({ done, value }) => {
-                  if (done) {
-                    controller.close();
-                    return;
-                  }
-                  
-                  receivedLength += value.length;
-                  chunks.push(value);
-                  
-                  // Convertir el chunk a texto
-                  const chunk = new TextDecoder().decode(value);
-                  
-                  // Procesar cada línea como un objeto JSON
-                  try {
-                    const lines = chunk.split('\n').filter(line => line.trim());
-                    
-                    for (const line of lines) {
-                      const data = JSON.parse(line);
-                      
-                      // Actualizar el progreso si la respuesta contiene información de progreso
-                      if (data.progress !== undefined) {
-                        conversionProgress.style.width = `${data.progress}%`;
-                        conversionStatus.textContent = `Procesando imágenes: ${data.processed}/${data.total} (${data.progress}%)`;
-                      }
-                      
-                      // Si la respuesta contiene el resultado final
-                      if (data.success !== undefined) {
-                        setTimeout(() => {
-                          loadingContainer.style.display = 'none';
-                          resultContainer.style.display = 'block';
-                          
-                          if (data.success) {
-                            document.querySelector('#resultContainer .alert').className = 'alert alert-success';
-                            document.querySelector('#resultContainer .alert-heading').textContent = '¡Conversión completada!';
-                            resultMessageMultiple.textContent = `${selectedFiles.length} imágenes convertidas con calidad ${quality}.`;
-                            downloadZipBtn.href = data.zipUrl;
-                            downloadZipBtn.style.display = 'inline-block';
-                            
-                            // Guardar el nombre del archivo ZIP para eliminarlo después
-                            currentZipFilename = data.zipFilename;
-                          } else {
-                            document.querySelector('#resultContainer .alert').className = 'alert alert-danger';
-                            document.querySelector('#resultContainer .alert-heading').textContent = '¡Error!';
-                            resultMessageMultiple.textContent = `Error: ${data.error}`;
-                            downloadZipBtn.style.display = 'none';
-                          }
-                        }, 500);
-                      }
-                    }
-                  } catch (e) {
-                    console.error('Error al procesar la respuesta:', e);
-                  }
-                  
-                  controller.enqueue(value);
-                  push();
-                }).catch(err => {
-                  console.error('Error al leer la respuesta:', err);
-                  controller.error(err);
-                });
-              }
+          return response.json();
+        })
+        .then(data => {
+          if (data.success) {
+            loadingContainer.style.display = 'none';
+            resultContainer.style.display = 'block';
+            
+            document.querySelector('#resultContainer .alert').className = 'alert alert-success';
+            document.querySelector('#resultContainer .alert-heading').textContent = '¡Conversión completada!';
+            resultMessageMultiple.textContent = `${selectedFiles.length} imágenes convertidas con calidad ${quality}.`;
+            
+            // Si la respuesta contiene el ZIP como Base64
+            if (data.zipBase64) {
+              // Crear una URL de datos para el ZIP
+              const zipDataUrl = `data:application/zip;base64,${data.zipBase64}`;
               
-              push();
+              // Configurar la descarga
+              downloadZipBtn.href = zipDataUrl;
+              downloadZipBtn.download = data.zipFilename;
+              downloadZipBtn.style.display = 'inline-block';
+              
+              // Guardar el nombre del archivo ZIP para simulación de eliminación
+              currentZipFilename = data.zipFilename;
+            } else {
+              downloadZipBtn.style.display = 'none';
+              resultMessageMultiple.textContent += " Sin embargo, no se pudo generar el archivo ZIP.";
             }
-          });
+          } else {
+            loadingContainer.style.display = 'none';
+            resultContainer.style.display = 'block';
+            document.querySelector('#resultContainer .alert').className = 'alert alert-danger';
+            document.querySelector('#resultContainer .alert-heading').textContent = '¡Error!';
+            resultMessageMultiple.textContent = `Error: ${data.error || 'Error desconocido'}`;
+            downloadZipBtn.style.display = 'none';
+          }
         })
         .catch(error => {
           console.error('Error al convertir las imágenes:', error);
@@ -396,27 +358,27 @@
         });
       });
       
-      // Evento para eliminar el archivo ZIP después de descargarlo
+      // Evento para simular la eliminación del archivo ZIP después de descargarlo
       downloadZipBtn.addEventListener('click', function() {
         // Esperar un momento para asegurar que la descarga comience
         setTimeout(() => {
           if (currentZipFilename) {
-            // Eliminar el archivo del servidor
-            fetch(`/api/zip/${currentZipFilename}`, {
+            // Llamar a la función serverless para simular la eliminación
+            fetch(`/.netlify/functions/zip/${currentZipFilename}`, {
               method: 'DELETE'
             })
             .then(response => {
               if (response.ok) {
-                console.log(`Archivo ZIP ${currentZipFilename} eliminado del servidor`);
+                console.log(`Solicitud de eliminación del archivo ZIP ${currentZipFilename} enviada correctamente`);
               } else {
-                console.error(`Error al eliminar el archivo ZIP ${currentZipFilename}`);
+                console.error(`Error al solicitar la eliminación del archivo ZIP ${currentZipFilename}`);
               }
             })
             .catch(error => {
               console.error('Error en la solicitud de eliminación:', error);
             });
           }
-        }, 3000); // Dar tiempo para que comience la descarga antes de eliminar
+        }, 3000); // Dar tiempo para que comience la descarga antes de simular la eliminación
       });
       
       // Nueva conversión
@@ -425,18 +387,18 @@
         previewGrid.innerHTML = '';
         updateFileCounter();
         
-        // Eliminar el archivo ZIP si existe
+        // Simular eliminación del archivo ZIP si existe
         if (currentZipFilename) {
-          fetch(`/api/zip/${currentZipFilename}`, {
+          fetch(`/.netlify/functions/zip/${currentZipFilename}`, {
             method: 'DELETE'
           })
           .then(response => {
             if (response.ok) {
-              console.log(`Archivo ZIP ${currentZipFilename} eliminado al iniciar nueva conversión`);
+              console.log(`Solicitud de eliminación del archivo ZIP ${currentZipFilename} enviada correctamente`);
             }
           })
           .catch(error => {
-            console.error('Error al eliminar el archivo ZIP:', error);
+            console.error('Error al solicitar la eliminación del archivo ZIP:', error);
           });
           
           currentZipFilename = '';
