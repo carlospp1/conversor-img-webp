@@ -2,123 +2,10 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 
 const sharp = require('sharp');
-const { Buffer } = require('buffer');
 const path = require('path');
-const os = require('os');
-const fs = require('fs');
-const { randomUUID } = require('crypto');
-const archiver = require('archiver');
 const busboy = require('busboy');
-
-// Función para crear un directorio temporal
-function createTempDir() {
-  const uuid = randomUUID();
-  const dir = path.join(os.tmpdir(), `webp_converter_${uuid}`);
-  fs.mkdirSync(dir, { recursive: true });
-  return dir;
-}
-
-// Función para limpiar archivos temporales
-function cleanupTempFiles(directory) {
-  try {
-    if (!directory || !fs.existsSync(directory)) {
-      return;
-    }
-    
-    // Leer todos los archivos en el directorio
-    const files = fs.readdirSync(directory);
-    
-    // Eliminar cada archivo
-    for (const file of files) {
-      const filePath = path.join(directory, file);
-      try {
-        const stat = fs.statSync(filePath);
-        
-        if (stat.isDirectory()) {
-          // Recursivamente eliminar subdirectorios
-          cleanupTempFiles(filePath);
-        } else {
-          // Eliminar archivos
-          fs.unlinkSync(filePath);
-        }
-      } catch (err) {
-        console.error(`Error al eliminar ${filePath}:`, err);
-      }
-    }
-    
-    // Finalmente eliminar el directorio
-    try {
-      fs.rmdirSync(directory);
-    } catch (err) {
-      console.error(`Error al eliminar directorio ${directory}:`, err);
-    }
-  } catch (err) {
-    console.error('Error al limpiar archivos temporales:', err);
-  }
-}
-
-// Función para procesar la solicitud multipart/form-data
-function parseMultipartFormData(event) {
-  return new Promise((resolve, reject) => {
-    const { body, isBase64Encoded, headers } = event;
-    const contentType = headers['content-type'] || headers['Content-Type'];
-    
-    if (!contentType?.includes('multipart/form-data')) {
-      return reject(new Error('Formato de solicitud inválido'));
-    }
-    
-    const bodyBuffer = isBase64Encoded 
-      ? Buffer.from(body, 'base64') 
-      : Buffer.from(body);
-    
-    const bb = busboy({ headers: { 'content-type': contentType } });
-    const fields = {};
-    const files = [];
-    
-    bb.on('field', (fieldname, val) => {
-      fields[fieldname] = val;
-    });
-    
-    bb.on('file', (fieldname, file, info) => {
-      if (fieldname !== 'images') return;
-      
-      const { filename, encoding, mimeType } = info;
-      const chunks = [];
-      
-      file.on('data', (data) => {
-        chunks.push(data);
-      });
-      
-      file.on('end', () => {
-        if (chunks.length) {
-          files.push({
-            fieldname,
-            originalname: filename,
-            mimetype: mimeType,
-            buffer: Buffer.concat(chunks)
-          });
-        }
-      });
-    });
-    
-    bb.on('finish', () => {
-      resolve({ fields, files });
-    });
-    
-    bb.on('error', (err) => {
-      reject(err);
-    });
-    
-    bb.write(bodyBuffer);
-    bb.end();
-  });
-}
-
-// Obtener el nombre original sin extensión
-function getOriginalFilename(filename) {
-  const { name } = path.parse(filename);
-  return name;
-}
+const archiver = require('archiver');
+const { Readable } = require('stream');
 
 export const handler = async (event, context) => {
   // Solo aceptar solicitudes POST
@@ -129,12 +16,9 @@ export const handler = async (event, context) => {
     };
   }
 
-  let tempDirectory = null;
-  let outputDirectory = null;
-  
   try {
-    // Procesar la solicitud multipart
-    const { fields, files } = await parseMultipartFormData(event);
+    // Procesar la solicitud multipart/form-data
+    const { files, quality } = await parseMultipartForm(event);
     
     if (!files || files.length === 0) {
       return {
@@ -142,85 +26,163 @@ export const handler = async (event, context) => {
         body: JSON.stringify({ error: 'No se han subido imágenes' }),
       };
     }
-    
-    // Crear directorios temporales
-    tempDirectory = createTempDir();
-    outputDirectory = createTempDir();
-    
-    const quality = parseInt(fields.quality) || 75;
-    const timestamp = Date.now();
-    const zipFilename = `webp_converted_${timestamp}.zip`;
-    const zipFilePath = path.join(outputDirectory, zipFilename);
-    
-    // Crear archivo ZIP
-    const output = fs.createWriteStream(zipFilePath);
-    const archive = archiver('zip', {
-      zlib: { level: 6 }
+
+    // Verificar el tamaño total de archivos
+    let totalSize = 0;
+    files.forEach(file => {
+      totalSize += file.content.length;
     });
     
-    archive.pipe(output);
-    
-    // Procesar cada imagen
-    let processedCount = 0;
-    const totalFiles = files.length;
-    
-    for (const file of files) {
-      const originalFilename = getOriginalFilename(file.originalname);
-      const outputFilename = `${originalFilename}.webp`;
-      const inputPath = path.join(tempDirectory, file.originalname);
-      const outputPath = path.join(tempDirectory, outputFilename);
-      
-      // Guardar la imagen en el directorio temporal
-      fs.writeFileSync(inputPath, file.buffer);
-      
-      // Convertir a WEBP
-      await sharp(inputPath)
-        .webp({ quality: quality })
-        .toFile(outputPath);
-      
-      // Añadir al ZIP
-      archive.file(outputPath, { name: outputFilename });
-      
-      processedCount++;
+    // Si es demasiado grande, rechazar la solicitud
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    if (totalSize > MAX_SIZE) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ 
+          error: 'El tamaño total de las imágenes es demasiado grande. Intenta con menos imágenes o imágenes más pequeñas.' 
+        }),
+      };
     }
     
-    // Finalizar el archivo ZIP
-    await archive.finalize();
+    // Convertir todas las imágenes a WEBP
+    const qualityValue = parseInt(quality) || 75;
+    const timestamp = Date.now();
+    const convertedImages = [];
     
-    // Leer el archivo ZIP como base64
-    const zipBuffer = fs.readFileSync(zipFilePath);
-    const base64Zip = zipBuffer.toString('base64');
+    for (const file of files) {
+      const originalFilename = path.parse(file.filename).name;
+      const outputFilename = `${originalFilename}.webp`;
+      
+      // Convertir a WEBP
+      const webpBuffer = await sharp(file.content)
+        .webp({ quality: qualityValue })
+        .toBuffer();
+      
+      convertedImages.push({
+        filename: outputFilename,
+        content: webpBuffer
+      });
+    }
     
-    // Limpiar archivos temporales
-    cleanupTempFiles(tempDirectory);
-    tempDirectory = null;
+    // Crear un archivo ZIP en memoria
+    const archiveData = await createArchiveInMemory(convertedImages);
+    
+    // Convertir a base64 para la respuesta
+    const base64Zip = archiveData.toString('base64');
+    const zipFilename = `webp_converted_${timestamp}.zip`;
     
     return {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        message: `${totalFiles} imágenes convertidas correctamente`,
+        message: `${files.length} imágenes convertidas correctamente`,
         zipBase64: base64Zip,
         zipFilename: zipFilename,
-        quality: quality
+        quality: qualityValue
       }),
-      isBase64Encoded: false
     };
     
   } catch (error) {
     console.error('Error al procesar las imágenes:', error);
-    
-    // Limpiar archivos temporales
-    if (tempDirectory) {
-      cleanupTempFiles(tempDirectory);
-    }
-    if (outputDirectory) {
-      cleanupTempFiles(outputDirectory);
-    }
     
     return {
       statusCode: 500,
       body: JSON.stringify({ error: `Error al procesar las imágenes: ${error.message}` }),
     };
   }
-}; 
+};
+
+// Función para procesar formularios multipart
+function parseMultipartForm(event) {
+  return new Promise((resolve, reject) => {
+    const contentType = event.headers['content-type'] || event.headers['Content-Type'];
+    
+    if (!contentType || !contentType.includes('multipart/form-data')) {
+      return reject(new Error('Formato de solicitud inválido'));
+    }
+    
+    // Preparar los datos
+    const result = { fields: {}, files: [] };
+    
+    // Configurar busboy para procesar el formulario
+    const bb = busboy({ headers: { 'content-type': contentType } });
+    
+    // Procesar campos normales
+    bb.on('field', (fieldname, value) => {
+      result.fields[fieldname] = value;
+    });
+    
+    // Procesar archivos
+    bb.on('file', (fieldname, file, info) => {
+      if (fieldname !== 'images') return;
+      
+      const chunks = [];
+      file.on('data', (data) => chunks.push(data));
+      file.on('end', () => {
+        if (chunks.length) {
+          result.files.push({
+            filename: info.filename,
+            mimetype: info.mimeType,
+            content: Buffer.concat(chunks)
+          });
+        }
+      });
+    });
+    
+    // Finalizar
+    bb.on('finish', () => {
+      resolve({
+        files: result.files,
+        quality: result.fields.quality
+      });
+    });
+    
+    // Manejar errores
+    bb.on('error', reject);
+    
+    // Procesar el cuerpo de la solicitud
+    const body = event.isBase64Encoded 
+      ? Buffer.from(event.body, 'base64') 
+      : event.body;
+    
+    bb.write(body);
+    bb.end();
+  });
+}
+
+// Función para crear un archivo ZIP en memoria
+function createArchiveInMemory(files) {
+  return new Promise((resolve, reject) => {
+    // Crear un stream de archivo en memoria
+    const archive = archiver('zip', {
+      zlib: { level: 6 }
+    });
+    
+    // Capturar los chunks del stream
+    const chunks = [];
+    const output = new Readable({
+      read() {}
+    });
+    
+    output.on('data', chunk => chunks.push(chunk));
+    output.on('end', () => resolve(Buffer.concat(chunks)));
+    
+    archive.on('error', err => reject(err));
+    
+    // Conectar el stream
+    archive.pipe(output);
+    
+    // Añadir los archivos al ZIP
+    for (const file of files) {
+      archive.append(file.content, { name: file.filename });
+    }
+    
+    // Finalizar el archivo
+    archive.finalize().then(() => {
+      // Este es un hack para asegurarnos que todos los datos se han procesado
+      setTimeout(() => {
+        output.push(null); // Señalar el fin del stream
+      }, 500);
+    });
+  });
+} 
