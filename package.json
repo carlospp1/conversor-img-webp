@@ -6,8 +6,7 @@
   "scripts": {
     "start": "node app.js",
     "dev": "netlify dev",
-    "build": "npm run copy-assets",
-    "copy-assets": "cp -r public/* public/",
+    "build": "echo 'Skipping build step - using static files'",
     "netlify-dev": "netlify dev"
   },
   "devDependencies": {
