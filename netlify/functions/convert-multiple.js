@@ -2,6 +2,7 @@ const sharp = require('sharp');
 const archiver = require('archiver');
 const busboy = require('busboy');
 const { Readable } = require('stream');
+const JSZip = require('jszip');
 
 exports.handler = async (event, context) => {
   // Solo aceptar solicitudes POST
@@ -17,39 +18,33 @@ exports.handler = async (event, context) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'No se han subido imágenes' }) };
     }
 
-    // Límites extremos para evitar problemas
-    if (formData.images.length > 50) {
+    // Límite máximo de imágenes (reducido para evitar problemas)
+    if (formData.images.length > 10) {
       return { 
         statusCode: 400, 
         body: JSON.stringify({ 
-          error: 'Has seleccionado demasiadas imágenes. Por favor, intenta con un máximo de 3 imágenes.' 
+          error: 'Has seleccionado demasiadas imágenes. Por favor, selecciona máximo 10 imágenes para evitar problemas.' 
         }) 
       };
     }
 
-    // Convertir imágenes (método ultra simple)
+    // Convertir imágenes
     const quality = parseInt(formData.quality) || 75;
     const timestamp = Date.now();
     const convertedImages = [];
     
-    // Convertir cada imagen - sin usar ZIP
     for (const img of formData.images) {
       try {
-        // Convertir a WEBP
         const webpBuffer = await sharp(img.data)
           .webp({ quality: quality })
           .toBuffer();
         
-        // Convertir a base64 para enviar directamente
-        const base64Image = webpBuffer.toString('base64');
-        
         convertedImages.push({
           filename: `${img.name}.webp`,
-          dataUrl: `data:image/webp;base64,${base64Image}`
+          data: webpBuffer
         });
       } catch (err) {
         console.error(`Error al convertir imagen ${img.filename}:`, err);
-        // Continuar con las demás
       }
     }
     
@@ -60,13 +55,31 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Devolver solo las imágenes convertidas sin crear ZIP
+    // Crear ZIP usando JSZip (método más confiable)
+    const zip = new JSZip();
+    
+    // Añadir cada imagen convertida al ZIP
+    convertedImages.forEach(img => {
+      zip.file(img.filename, img.data);
+    });
+    
+    // Generar ZIP como buffer
+    const zipBuffer = await zip.generateAsync({
+      type: 'nodebuffer',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 6 }
+    });
+    
+    // Convertir ZIP a base64
+    const base64Zip = zipBuffer.toString('base64');
+    
     return {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
         message: `${convertedImages.length} imágenes convertidas correctamente`,
-        images: convertedImages,
+        zipBase64: base64Zip,
+        zipFilename: `webp_images_${timestamp}.zip`,
         quality: quality
       })
     };

@@ -283,9 +283,9 @@
       convertMultipleBtn.addEventListener('click', function() {
         if (selectedFiles.length === 0) return;
         
-        // Verificar límite de 3 imágenes
-        if (selectedFiles.length > 3) {
-          alert('Por favor, selecciona un máximo de 3 imágenes para evitar problemas.');
+        // Verificar límite de imágenes
+        if (selectedFiles.length > 10) {
+          alert('Por favor, selecciona un máximo de 10 imágenes para evitar problemas.');
           return;
         }
         
@@ -307,12 +307,25 @@
         conversionProgress.style.width = '0%';
         conversionStatus.textContent = `Preparando ${selectedFiles.length} imágenes...`;
         
-        // Usar la función serverless en lugar de la API
+        // Actualizar progreso
+        let progress = 10;
+        const progressInterval = setInterval(() => {
+          if (progress < 90) {
+            progress += 5;
+            conversionProgress.style.width = `${progress}%`;
+            conversionStatus.textContent = `Procesando imágenes (${progress}%)...`;
+          } else {
+            clearInterval(progressInterval);
+          }
+        }, 500);
+        
+        // Enviar solicitud a la función de Netlify
         fetch('/.netlify/functions/convert-multiple', {
           method: 'POST',
           body: formData
         })
         .then(response => {
+          clearInterval(progressInterval);
           if (!response.ok) {
             throw new Error(`Error del servidor: ${response.status}`);
           }
@@ -320,52 +333,30 @@
         })
         .then(data => {
           if (data.success) {
-            loadingContainer.style.display = 'none';
-            resultContainer.style.display = 'block';
+            // Completar progreso
+            conversionProgress.style.width = '100%';
+            conversionStatus.textContent = 'Completado (100%)';
             
-            document.querySelector('#resultContainer .alert').className = 'alert alert-success';
-            document.querySelector('#resultContainer .alert-heading').textContent = '¡Conversión completada!';
-            resultMessageMultiple.textContent = `${data.images.length} imágenes convertidas con calidad ${quality}.`;
-            
-            // Crear un contenedor para mostrar las imágenes
-            const imagesContainer = document.createElement('div');
-            imagesContainer.className = 'row mt-3';
-            
-            // Añadir cada imagen con su botón de descarga
-            data.images.forEach((img, index) => {
-              const col = document.createElement('div');
-              col.className = 'col-md-4 mb-3';
+            // Mostrar resultado
+            setTimeout(() => {
+              loadingContainer.style.display = 'none';
+              resultContainer.style.display = 'block';
               
-              const card = document.createElement('div');
-              card.className = 'card';
+              document.querySelector('#resultContainer .alert').className = 'alert alert-success';
+              document.querySelector('#resultContainer .alert-heading').textContent = '¡Conversión completada!';
+              resultMessageMultiple.textContent = `${data.message} (Calidad: ${quality})`;
               
-              const imgElement = document.createElement('img');
-              imgElement.src = img.dataUrl;
-              imgElement.className = 'card-img-top';
-              imgElement.alt = img.filename;
-              
-              const cardBody = document.createElement('div');
-              cardBody.className = 'card-body text-center';
-              
-              const downloadBtn = document.createElement('a');
-              downloadBtn.href = img.dataUrl;
-              downloadBtn.download = img.filename;
-              downloadBtn.className = 'btn btn-success';
-              downloadBtn.textContent = 'Descargar';
-              
-              cardBody.appendChild(downloadBtn);
-              card.appendChild(imgElement);
-              card.appendChild(cardBody);
-              col.appendChild(card);
-              imagesContainer.appendChild(col);
-            });
-            
-            // Agregar contenedor de imágenes antes de los botones
-            const buttonsContainer = document.querySelector('#resultContainer .text-center');
-            buttonsContainer.parentNode.insertBefore(imagesContainer, buttonsContainer);
-            
-            // Ocultar botón de descarga ZIP
-            downloadZipBtn.style.display = 'none';
+              // Crear URL de datos para el ZIP
+              if (data.zipBase64) {
+                const zipDataUrl = `data:application/zip;base64,${data.zipBase64}`;
+                downloadZipBtn.href = zipDataUrl;
+                downloadZipBtn.download = data.zipFilename;
+                downloadZipBtn.style.display = 'inline-block';
+              } else {
+                downloadZipBtn.style.display = 'none';
+                resultMessageMultiple.textContent += ' Pero no se pudo generar el archivo ZIP.';
+              }
+            }, 500);
           } else {
             loadingContainer.style.display = 'none';
             resultContainer.style.display = 'block';
@@ -376,6 +367,7 @@
           }
         })
         .catch(error => {
+          clearInterval(progressInterval);
           console.error('Error al convertir las imágenes:', error);
           
           loadingContainer.style.display = 'none';
@@ -392,12 +384,6 @@
         selectedFiles = [];
         previewGrid.innerHTML = '';
         updateFileCounter();
-        
-        // Limpiar el resultado anterior
-        const imagesContainer = document.querySelector('#resultContainer .row');
-        if (imagesContainer) {
-          imagesContainer.remove();
-        }
         
         loadingContainer.style.display = 'none';
         resultContainer.style.display = 'none';
