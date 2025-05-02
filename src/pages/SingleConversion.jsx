@@ -76,45 +76,23 @@ export const SingleConversion = () => {
 
     try {
       setIsConverting(true);
-      setProgressStatus({
-        message: 'Descargando...'
-      });
-
-      // Pequeña pausa para que la UI se actualice
-      await new Promise(resolve => setTimeout(resolve, 100));
       
+      // Usar el blob previamente generado o generar uno nuevo
       const fileName = file.name.split('.').slice(0, -1).join('.') + '.webp';
-      
-      // Usar el blob previamente generado
       const blob = previewBlob || await convertToWebP(file);
       const success = downloadFile(blob, fileName);
       
-      if (success) {
-        setProgressStatus({
-          message: 'Imagen descargada correctamente'
-        });
-      } else {
-        setProgressStatus({
-          message: 'Hubo un problema al descargar la imagen'
-        });
-      }
-      
-      // Dejar visible el mensaje por 2 segundos
+      // Simplemente resetear el estado después de la descarga
       setTimeout(() => {
         setIsConverting(false);
-        setProgressStatus({ message: '' });
-      }, 2000);
+      }, 500);
       
     } catch (error) {
       console.error('Error durante la descarga:', error);
-      setProgressStatus({
-        message: `Error: ${error.message}`
-      });
       
       setTimeout(() => {
         setIsConverting(false);
-        setProgressStatus({ message: '' });
-      }, 2000);
+      }, 500);
     }
   };
 
@@ -159,20 +137,6 @@ export const SingleConversion = () => {
         isConverting={isConverting}
         hasFiles={!!file}
       />
-      
-      {isConverting && (
-        <div className="progress-container">
-          <div className="progress-bar">
-            <div 
-              className="progress-fill" 
-              style={{ width: '100%' }}
-            ></div>
-          </div>
-          <div className="progress-text">
-            {progressStatus.message}
-          </div>
-        </div>
-      )}
     </div>
   );
 }; 

@@ -79,7 +79,8 @@ export const useImageConverter = (initialQuality = 75) => {
       
       img.src = originalUrl;
     } catch (error) {
-      console.error('Error al generar la vista previa:', error);
+      console.error('Error al generar la vista previa
+        
     }
   };
 

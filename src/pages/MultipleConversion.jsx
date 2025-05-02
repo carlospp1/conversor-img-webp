@@ -127,12 +127,18 @@ export const MultipleConversion = () => {
       const success = downloadFile(blob, 'imagenes-convertidas.zip');
       
       if (success) {
+        // Finalizar la conversión inmediatamente después de descargar
+        setIsConverting(false);
+        
         setProgressStatus(prev => ({
           ...prev,
           current: files.length,
           message: `Conversión completada: ${compressionStats.successCount} de ${compressionStats.totalCount} imágenes (${totalTimeSeconds}s)`
         }));
+        
       } else {
+        setIsConverting(false);
+        
         setProgressStatus(prev => ({
           ...prev,
           current: files.length,
@@ -140,22 +146,15 @@ export const MultipleConversion = () => {
         }));
       }
       
-      // Dejamos la barra de progreso visible pero cambiamos el estado de conversión
-      setTimeout(() => {
-        setIsConverting(false);
-      }, 2000);
-      
     } catch (error) {
       console.error('Error durante la conversión múltiple:', error);
+      setIsConverting(false);
+      
       setProgressStatus(prev => ({
         ...prev,
         current: 0,
         message: `Error en la conversión: ${error.message}`
       }));
-      
-      setTimeout(() => {
-        setIsConverting(false);
-      }, 2000);
     }
   };
 
@@ -163,12 +162,10 @@ export const MultipleConversion = () => {
     Math.round((progressStatus.current / progressStatus.total) * 100) : 0;
 
   // Determinar si la barra de progreso debe mostrarse
-  const showProgressBar = isConverting || (progressStatus.message && progressPercent < 100);
+  const showProgressBar = isConverting;
 
   return (
     <div className="container">
-      <h1>Conversión Múltiple</h1>
-      <p className="subtitle">Convierte varias imágenes a WebP y descárgalas como ZIP</p>
 
       <QualityControl 
         quality={quality} 
@@ -178,6 +175,23 @@ export const MultipleConversion = () => {
         hasFiles={files.length}
       />
       
+      {files.length === 0 ? (
+        <DropZone onFilesDrop={handleFilesDrop} multiple={true} />
+      ) : (
+        <div className="image-preview">
+          <div className="image-preview-title">
+            Imágenes seleccionadas ({files.length})
+            <button 
+              className="clear-all-button" 
+              onClick={handleClearAll}
+            >
+              Eliminar todas
+            </button>
+          </div>
+          <ImagePreview files={files} onRemove={handleRemove} multiple={true} />
+        </div>
+      )}
+
       {/* Tarjeta de información y progreso */}
       {(showProgressBar || compressionStats) && (
         <div className="info-card">
@@ -225,23 +239,6 @@ export const MultipleConversion = () => {
               </div>
             </div>
           )}
-        </div>
-      )}
-      
-      {files.length === 0 ? (
-        <DropZone onFilesDrop={handleFilesDrop} multiple={true} />
-      ) : (
-        <div className="image-preview">
-          <div className="image-preview-title">
-            Imágenes seleccionadas ({files.length})
-            <button 
-              className="clear-all-button" 
-              onClick={handleClearAll}
-            >
-              Eliminar todas
-            </button>
-          </div>
-          <ImagePreview files={files} onRemove={handleRemove} multiple={true} />
         </div>
       )}
     </div>
