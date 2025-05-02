@@ -6,6 +6,18 @@ export const useImageConverter = (initialQuality = 75) => {
   const [compressionInfo, setCompressionInfo] = useState(null);
   const [previewBlob, setPreviewBlob] = useState(null);
   const [currentFile, setCurrentFile] = useState(null);
+  const [previewUrls, setPreviewUrls] = useState({
+    original: null,
+    webp: null
+  });
+
+  // Efecto para limpiar las URLs al desmontar
+  useEffect(() => {
+    return () => {
+      if (previewUrls.original) URL.revokeObjectURL(previewUrls.original);
+      if (previewUrls.webp) URL.revokeObjectURL(previewUrls.webp);
+    };
+  }, []);
 
   // Efecto para convertir la imagen cuando se carga o cambia la calidad
   useEffect(() => {
@@ -16,6 +28,9 @@ export const useImageConverter = (initialQuality = 75) => {
 
   const generatePreview = async (file) => {
     try {
+      // Crear URL para la imagen original
+      const originalUrl = URL.createObjectURL(file);
+      
       const img = new Image();
       
       img.onload = () => {
@@ -33,6 +48,21 @@ export const useImageConverter = (initialQuality = 75) => {
             const compressedSize = blob.size;
             const savingsPercent = Math.round((1 - (compressedSize / originalSize)) * 100);
             
+            // Crear URL para la versión WebP
+            const webpUrl = URL.createObjectURL(blob);
+            
+            // Actualizar URLs de vista previa
+            setPreviewUrls(prev => {
+              // Limpiar URLs anteriores
+              if (prev.original) URL.revokeObjectURL(prev.original);
+              if (prev.webp) URL.revokeObjectURL(prev.webp);
+              
+              return {
+                original: originalUrl,
+                webp: webpUrl
+              };
+            });
+            
             setCompressionInfo({
               originalSize,
               compressedSize,
@@ -47,7 +77,7 @@ export const useImageConverter = (initialQuality = 75) => {
         }, 'image/webp', quality / 100);
       };
       
-      img.src = URL.createObjectURL(file);
+      img.src = originalUrl;
     } catch (error) {
       console.error('Error al generar la vista previa:', error);
     }
@@ -229,6 +259,7 @@ export const useImageConverter = (initialQuality = 75) => {
     downloadFile,
     compressionInfo,
     setCurrentImageFile,
-    previewBlob
+    previewBlob,
+    previewUrls
   };
 }; 

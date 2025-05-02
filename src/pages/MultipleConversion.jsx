@@ -70,9 +70,18 @@ export const MultipleConversion = () => {
     setFiles(files.filter((_, i) => i !== index));
   };
 
+  // Función para limpiar imágenes y detalles
+  const handleClearAll = () => {
+    setFiles([]);
+    setCompressionStats(null);
+  };
+
   const handleConvert = async () => {
     if (!files.length || isConverting) return;
 
+    // Limpiar estadísticas previas al iniciar nueva conversión
+    setCompressionStats(null);
+    
     try {
       const startTime = new Date();
       setIsConverting(true);
@@ -153,6 +162,9 @@ export const MultipleConversion = () => {
   const progressPercent = progressStatus.total ? 
     Math.round((progressStatus.current / progressStatus.total) * 100) : 0;
 
+  // Determinar si la barra de progreso debe mostrarse
+  const showProgressBar = isConverting || (progressStatus.message && progressPercent < 100);
+
   return (
     <div className="container">
       <h1>Conversión Múltiple</h1>
@@ -166,49 +178,53 @@ export const MultipleConversion = () => {
         hasFiles={files.length}
       />
       
-      {isConverting && (
-        <div className="progress-container">
-          <div className="progress-bar">
-            <div 
-              className="progress-fill" 
-              style={{ width: `${progressPercent}%` }}
-            ></div>
-          </div>
-          <div className="progress-text">
-            {progressStatus.message || `Procesando ${progressStatus.current} de ${progressStatus.total}`}
-          </div>
-          {progressStatus.startTime && (
-            <div className="progress-details">
-              {progressPercent}% completado
+      {/* Tarjeta de información y progreso */}
+      {(showProgressBar || compressionStats) && (
+        <div className="info-card">
+          {showProgressBar && (
+            <div className="progress-container">
+              <div className="progress-bar">
+                <div 
+                  className="progress-fill" 
+                  style={{ width: `${progressPercent}%` }}
+                ></div>
+              </div>
+              <div className="progress-text">
+                {progressStatus.message || `Procesando ${progressStatus.current} de ${progressStatus.total}`}
+              </div>
+              {progressStatus.startTime && (
+                <div className="progress-details">
+                  {progressPercent}% completado
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
-
-      {/* Mostrar estadísticas de compresión si están disponibles */}
-      {compressionStats && (
-        <div className="compression-stats-panel">
-          <div className="compression-stats-row">
-            <span>Original:</span>
-            <strong>{formatFileSize(compressionStats.totalOriginalSize)}</strong>
-          </div>
-          <div className="compression-stats-row">
-            <span>WebP:</span>
-            <strong>{formatFileSize(compressionStats.totalCompressedSize)}</strong>
-          </div>
-          <div className="compression-stats-row">
-            <span>Ahorro:</span>
-            <strong className={`savings-${getSavingsColor(compressionStats.savingsPercent)}`}>
-              {compressionStats.savingsPercent}%
-            </strong>
-          </div>
-          <div className="compression-stats-row">
-            <span>Imágenes:</span>
-            <strong>{compressionStats.totalCount}</strong>
-          </div>
-          <div className="compression-stats-info">
-            Puedes volver a convertir las mismas imágenes con otra calidad usando el botón en el panel inferior derecho o cargar nuevas haciendo click en "Eliminar todo"
-          </div>
+          
+          {compressionStats && (
+            <div className="compression-stats-panel">
+              <div className="compression-stats-row">
+                <span>Original:</span>
+                <strong>{formatFileSize(compressionStats.totalOriginalSize)}</strong>
+              </div>
+              <div className="compression-stats-row">
+                <span>WebP:</span>
+                <strong>{formatFileSize(compressionStats.totalCompressedSize)}</strong>
+              </div>
+              <div className="compression-stats-row">
+                <span>Ahorro:</span>
+                <strong className={`savings-${getSavingsColor(compressionStats.savingsPercent)}`}>
+                  {compressionStats.savingsPercent}%
+                </strong>
+              </div>
+              <div className="compression-stats-row">
+                <span>Imágenes:</span>
+                <strong>{compressionStats.totalCount}</strong>
+              </div>
+              <div className="compression-stats-info">
+                Puedes volver a convertir las mismas imágenes con otra calidad usando el botón en el panel inferior derecho o cargar nuevas haciendo click en "Eliminar todo"
+              </div>
+            </div>
+          )}
         </div>
       )}
       
@@ -220,7 +236,7 @@ export const MultipleConversion = () => {
             Imágenes seleccionadas ({files.length})
             <button 
               className="clear-all-button" 
-              onClick={() => setFiles([])}
+              onClick={handleClearAll}
             >
               Eliminar todas
             </button>

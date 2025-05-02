@@ -773,4 +773,139 @@ h1 {
   width: 100%;
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
+}
+
+/* Comparison View */
+.comparison-view {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  user-select: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.comparison-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--white);
+}
+
+.comparison-original {
+  z-index: 1;
+}
+
+.comparison-webp {
+  z-index: 0;
+}
+
+.comparison-layer img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.comparison-slider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--primary-color);
+  cursor: ew-resize;
+  z-index: 2;
+  transform: translateX(-50%);
+}
+
+.comparison-handle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.comparison-handle::before,
+.comparison-handle::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 2px;
+  background: white;
+}
+
+.comparison-handle::before {
+  transform: translateX(-3px) rotate(45deg);
+}
+
+.comparison-handle::after {
+  transform: translateX(3px) rotate(-45deg);
+}
+
+.comparison-label {
+  position: absolute;
+  bottom: 10px;
+  padding: 4px 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  z-index: 3;
+}
+
+.comparison-label.left {
+  left: 10px;
+}
+
+.comparison-label.right {
+  right: 10px;
+}
+
+.comparison-container {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  margin-bottom: 1rem;
+}
+
+/* Tarjeta de información */
+.info-card {
+  background-color: var(--white);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.info-card .progress-container {
+  margin-bottom: 1.5rem;
+  margin-top: 0;
+  padding: 0;
+  box-shadow: none;
+  background: none;
+}
+
+.info-card .compression-stats-panel {
+  margin: 0;
+  padding: 0;
+  box-shadow: none;
+  background: none;
+}
+
+.info-card .progress-container + .compression-stats-panel {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #eee;
 } 

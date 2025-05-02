@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { DropZone } from '../components/DropZone';
 import { QualityControl } from '../components/QualityControl';
 import { ImagePreview } from '../components/ImagePreview';
+import { ComparisonView } from '../components/ComparisonView';
 import { useImageConverter } from '../hooks/useImageConverter';
 
 // Función helper para formatear tamaños de archivo
@@ -25,7 +26,8 @@ export const SingleConversion = () => {
     downloadFile, 
     compressionInfo, 
     setCurrentImageFile,
-    previewBlob
+    previewBlob,
+    previewUrls
   } = useImageConverter();
 
   // Cuando se carga una nueva imagen, actualizar el archivo actual en el hook
@@ -126,18 +128,27 @@ export const SingleConversion = () => {
 
   return (
     <div className="container">
-      <h1>Convertidor a WebP</h1>
-      <p className="subtitle">Convierte cualquier imagen a formato WebP con un solo clic</p>
-
       {!file ? (
         <DropZone onFilesDrop={handleFilesDrop} />
       ) : (
-        <div className="image-preview">
-          <div className="image-preview-title">Vista previa</div>
-          <div className="single-image-container">
-            <ImagePreview files={[file]} onRemove={() => setFile(null)} />
+        <>
+          <div className="image-preview">
+            <div className="image-preview-title">Vista previa</div>
+            
+            {previewUrls?.original && previewUrls?.webp ? (
+              <div className="comparison-container">
+                <ComparisonView 
+                  originalImage={previewUrls.original} 
+                  convertedImage={previewUrls.webp} 
+                />
+              </div>
+            ) : (
+              <div className="single-image-container">
+                <ImagePreview files={[file]} onRemove={() => setFile(null)} />
+              </div>
+            )}
           </div>
-        </div>
+        </>
       )}
 
       <QualityControl 
