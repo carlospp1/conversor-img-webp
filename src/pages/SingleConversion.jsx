@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DropZone } from '../components/DropZone';
 import { QualityControl } from '../components/QualityControl';
 import { ImagePreview } from '../components/ImagePreview';
@@ -18,7 +18,22 @@ export const SingleConversion = () => {
     message: ''
   });
   
-  const { quality, setQuality, convertToWebP, downloadFile, compressionInfo } = useImageConverter();
+  const { 
+    quality, 
+    setQuality, 
+    convertToWebP, 
+    downloadFile, 
+    compressionInfo, 
+    setCurrentImageFile,
+    previewBlob
+  } = useImageConverter();
+
+  // Cuando se carga una nueva imagen, actualizar el archivo actual en el hook
+  useEffect(() => {
+    if (file) {
+      setCurrentImageFile(file);
+    }
+  }, [file, setCurrentImageFile]);
 
   const handleFilesDrop = (files) => {
     setFile(files[0]);
@@ -30,31 +45,25 @@ export const SingleConversion = () => {
     try {
       setIsConverting(true);
       setProgressStatus({
-        message: 'Convirtiendo imagen...'
-      });
-
-      // Pequeña pausa para que la UI se actualice
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      const blob = await convertToWebP(file);
-      
-      setProgressStatus({
         message: 'Descargando...'
       });
-      
+
       // Pequeña pausa para que la UI se actualice
       await new Promise(resolve => setTimeout(resolve, 100));
       
       const fileName = file.name.split('.').slice(0, -1).join('.') + '.webp';
+      
+      // Usar el blob previamente generado
+      const blob = previewBlob || await convertToWebP(file);
       const success = downloadFile(blob, fileName);
       
       if (success) {
         setProgressStatus({
-          message: 'Imagen convertida y descargada correctamente'
+          message: 'Imagen descargada correctamente'
         });
       } else {
         setProgressStatus({
-          message: 'La conversión fue exitosa pero hubo un problema al descargar'
+          message: 'Hubo un problema al descargar la imagen'
         });
       }
       
@@ -65,9 +74,9 @@ export const SingleConversion = () => {
       }, 2000);
       
     } catch (error) {
-      console.error('Error durante la conversión:', error);
+      console.error('Error durante la descarga:', error);
       setProgressStatus({
-        message: `Error en la conversión: ${error.message}`
+        message: `Error: ${error.message}`
       });
       
       setTimeout(() => {
@@ -76,6 +85,14 @@ export const SingleConversion = () => {
       }, 2000);
     }
   };
+
+  // Limpiar el archivo e información cuando se cierra el componente
+  useEffect(() => {
+    return () => {
+      setFile(null);
+      setCurrentImageFile(null);
+    };
+  }, []);
 
   return (
     <div className="container">
@@ -87,40 +104,24 @@ export const SingleConversion = () => {
       ) : (
         <div className="image-preview">
           <div className="image-preview-title">Vista previa</div>
-          <ImagePreview files={[file]} onRemove={() => setFile(null)} />
-          
-          {compressionInfo && (
-            <div className="compression-info">
-              <div className="compression-stat">
-                <span>Tamaño original:</span> 
-                <strong>{formatFileSize(compressionInfo.originalSize)}</strong>
-              </div>
-              <div className="compression-stat">
-                <span>Tamaño WebP estimado:</span> 
-                <strong>{formatFileSize(compressionInfo.compressedSize)}</strong>
-              </div>
-              <div className="compression-stat">
-                <span>Ahorro:</span> 
-                <strong className="savings">{compressionInfo.savingsPercent}%</strong>
-              </div>
-              <div className="compression-stat">
-                <span>Dimensiones:</span> 
-                <strong>{compressionInfo.width} × {compressionInfo.height} px</strong>
-              </div>
-            </div>
-          )}
+          <div className="single-image-container">
+            <ImagePreview files={[file]} onRemove={() => setFile(null)} />
+          </div>
         </div>
       )}
 
-      <QualityControl quality={quality} onChange={setQuality} />
-
+      <QualityControl 
+        quality={quality} 
+        onChange={setQuality} 
+        compressionInfo={compressionInfo}
+      />
+      
       {isConverting && (
         <div className="progress-container">
           <div className="progress-bar">
             <div 
               className="progress-fill" 
-              style={{ width: progressStatus.message.includes('Descargando') || 
-                      progressStatus.message.includes('correctamente') ? '100%' : '80%' }}
+              style={{ width: '100%' }}
             ></div>
           </div>
           <div className="progress-text">
@@ -135,7 +136,7 @@ export const SingleConversion = () => {
           onClick={handleConvert}
           disabled={!file || isConverting}
         >
-          {isConverting ? 'Convirtiendo...' : 'Convertir a WebP'}
+          {isConverting ? 'Descargando...' : 'Descargar WebP'}
         </button>
       </div>
     </div>

@@ -1,13 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import JSZip from 'jszip';
 
 export const useImageConverter = (initialQuality = 75) => {
   const [quality, setQuality] = useState(initialQuality);
   const [compressionInfo, setCompressionInfo] = useState(null);
+  const [previewBlob, setPreviewBlob] = useState(null);
+  const [currentFile, setCurrentFile] = useState(null);
 
-  const convertToWebP = async (file) => {
-    return new Promise((resolve, reject) => {
+  // Efecto para convertir la imagen cuando se carga o cambia la calidad
+  useEffect(() => {
+    if (currentFile) {
+      generatePreview(currentFile);
+    }
+  }, [quality, currentFile]);
+
+  const generatePreview = async (file) => {
+    try {
       const img = new Image();
+      
       img.onload = () => {
         const canvas = document.createElement('canvas');
         canvas.width = img.width;
@@ -31,6 +41,36 @@ export const useImageConverter = (initialQuality = 75) => {
               height: img.height
             });
             
+            setPreviewBlob(blob);
+          }
+        }, 'image/webp', quality / 100);
+      };
+      
+      img.src = URL.createObjectURL(file);
+    } catch (error) {
+      console.error('Error al generar la vista previa:', error);
+    }
+  };
+
+  const convertToWebP = async (file) => {
+    // Si ya tenemos un blob generado, lo usamos
+    if (previewBlob && currentFile === file) {
+      return previewBlob;
+    }
+    
+    // Si no, generamos uno nuevo
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        
+        canvas.toBlob(blob => {
+          if (blob) {
             resolve(blob);
           } else {
             reject(new Error('Error al convertir la imagen a WebP'));
@@ -44,6 +84,11 @@ export const useImageConverter = (initialQuality = 75) => {
       
       img.src = URL.createObjectURL(file);
     });
+  };
+
+  // Función para actualizar el archivo actual
+  const setCurrentImageFile = (file) => {
+    setCurrentFile(file);
   };
 
   const convertMultiple = async (files, onProgress) => {
@@ -160,6 +205,8 @@ export const useImageConverter = (initialQuality = 75) => {
     convertToWebP,
     convertMultiple,
     downloadFile,
-    compressionInfo
+    compressionInfo,
+    setCurrentImageFile,
+    previewBlob
   };
 }; 
