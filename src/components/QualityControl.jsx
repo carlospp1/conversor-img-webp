@@ -1,7 +1,10 @@
 export const QualityControl = ({ quality, onChange }) => {
   return (
     <div className="quality-control">
-      <p className="quality-text">Calidad: {quality}%</p>
+      <div className="quality-control-header">
+        <div className="quality-text">Calidad de compresión</div>
+        <div className="quality-value">{quality}%</div>
+      </div>
       <input
         type="range"
         className="quality-slider"

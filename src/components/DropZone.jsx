@@ -29,6 +29,14 @@ export const DropZone = ({ onFilesDrop, multiple = false }) => {
     input.click();
   }, [multiple, onFilesDrop]);
 
+  const handlePaste = useCallback((e) => {
+    e.preventDefault();
+    if (e.clipboardData && e.clipboardData.files.length) {
+      const files = multiple ? Array.from(e.clipboardData.files) : [e.clipboardData.files[0]];
+      onFilesDrop(files);
+    }
+  }, [multiple, onFilesDrop]);
+
   return (
     <div
       className="drop-zone"
@@ -36,10 +44,16 @@ export const DropZone = ({ onFilesDrop, multiple = false }) => {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onClick={handleClick}
+      onPaste={handlePaste}
+      tabIndex="0"
     >
-      <p>
-        Arrastra y suelta {multiple ? 'imágenes' : 'una imagen'} aquí o haz clic para seleccionar
-      </p>
+      <img src="/image-icon.svg" alt="Subir imagen" />
+      <div className="drop-zone-text">
+        Arrastra O Pega
+      </div>
+      <div className="drop-zone-hint">
+        (También puedes hacer clic para seleccionar {multiple ? 'archivos' : 'un archivo'})
+      </div>
     </div>
   );
 }; 

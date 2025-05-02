@@ -72,12 +72,18 @@ export const SingleConversion = () => {
 
   return (
     <div className="container">
-      <h1>Convertidor de Imágenes a WebP</h1>
+      <h1>Convertidor a WebP</h1>
+      <p className="subtitle">Convierte cualquier imagen a formato WebP con un solo clic</p>
 
       <QualityControl quality={quality} onChange={setQuality} />
       <DropZone onFilesDrop={handleFilesDrop} />
       
-      {file && <ImagePreview files={[file]} />}
+      {file && (
+        <div className="image-preview">
+          <div className="image-preview-title">Vista previa</div>
+          <ImagePreview files={[file]} />
+        </div>
+      )}
 
       {isConverting && (
         <div className="progress-container">
@@ -100,7 +106,7 @@ export const SingleConversion = () => {
           onClick={handleConvert}
           disabled={!file || isConverting}
         >
-          {isConverting ? 'Convirtiendo...' : 'Convertir'}
+          {isConverting ? 'Convirtiendo...' : 'Convertir a WebP'}
         </button>
       </div>
     </div>

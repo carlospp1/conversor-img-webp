@@ -120,13 +120,17 @@ export const MultipleConversion = () => {
 
   return (
     <div className="container">
-      <h1>Conversión Múltiple a WebP</h1>
+      <h1>Conversión Múltiple</h1>
+      <p className="subtitle">Convierte varias imágenes a WebP y descárgalas como ZIP</p>
 
       <QualityControl quality={quality} onChange={setQuality} />
       <DropZone onFilesDrop={handleFilesDrop} multiple={true} />
       
       {files.length > 0 && (
-        <ImagePreview files={files} onRemove={handleRemove} multiple={true} />
+        <div className="image-preview">
+          <div className="image-preview-title">Imágenes seleccionadas ({files.length})</div>
+          <ImagePreview files={files} onRemove={handleRemove} multiple={true} />
+        </div>
       )}
 
       {isConverting && (
@@ -156,7 +160,7 @@ export const MultipleConversion = () => {
         >
           {isConverting 
             ? `Convirtiendo...` 
-            : `Convertir ${files.length} ${files.length === 1 ? 'imagen' : 'imágenes'} y descargar ZIP`}
+            : `Convertir ${files.length} ${files.length === 1 ? 'imagen' : 'imágenes'} a WebP`}
         </button>
       </div>
     </div>

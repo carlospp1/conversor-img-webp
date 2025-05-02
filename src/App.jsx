@@ -8,8 +8,19 @@ function App() {
 
   return (
     <div className="app">
+      {/* Elementos de fondo */}
+      <div className="background">
+        <div className="bubbles"></div>
+        <div className="wave"></div>
+      </div>
+      
       <header className="header">
-        <div className="container">
+        <div className="header-content">
+          <div className="logo">
+            <img src="/favicon.svg" alt="Logo" />
+            <span>WebP Converter</span>
+          </div>
+          
           <nav className="main-nav">
             <div 
               className={`nav-item ${activeTab === 'single' ? 'active' : ''}`}
