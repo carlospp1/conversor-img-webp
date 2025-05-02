@@ -704,7 +704,7 @@ h1 {
   }
 }
 
-.clear-all-button {
+.clear-button {
   background-color: var(--accent-color);
   color: white;
   border: none;
@@ -715,7 +715,7 @@ h1 {
   transition: var(--transition);
 }
 
-.clear-all-button:hover {
+.clear-button:hover {
   background-color: #e62e5c;
 }
 

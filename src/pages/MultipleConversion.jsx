@@ -182,7 +182,7 @@ export const MultipleConversion = () => {
           <div className="image-preview-title">
             Imágenes seleccionadas ({files.length})
             <button 
-              className="clear-all-button" 
+              className="clear-button" 
               onClick={handleClearAll}
             >
               Eliminar todas

@@ -120,7 +120,7 @@ export const SingleConversion = () => {
             <div className="image-preview-title">
               Vista previa
               <button 
-                className="reset-image-button" 
+                className="clear-button" 
                 onClick={handleResetImage}
                 title="Borrar y subir una nueva imagen"
               >
