@@ -4,6 +4,7 @@
   text-align: center;
   pointer-events: none;
   z-index: 9999;
+  background: transparent;
 }
 
 #thanos-effect canvas {
@@ -15,4 +16,11 @@
 
 .preview-item {
   position: relative;
+  background-color: white;
+}
+
+/* Clase de transición para ocultar el elemento original */
+.thanos-disappearing {
+  opacity: 0;
+  transition: opacity 0.15s ease-out;
 } 

@@ -467,7 +467,7 @@ h1 {
 
 .image-preview-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(4, minmax(200px, 1fr));
   gap: 1rem;
   max-height: 280px;
   overflow-y: auto;

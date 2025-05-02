@@ -22,7 +22,7 @@ const sampler = (imgDatas, sourceImgData, width, height, layerCount) => {
   }
 };
 
-const playThanosEffect = async (target, effectContainer, onComplete) => {
+const playThanosEffect = async (target, effectContainer, capturedCanvas, onComplete) => {
   const LAYER_COUNT = 32;
   const TRANSITION_DURATION = 1.5;
   const TRANSITION_DELAY = 1.35;
@@ -33,9 +33,16 @@ const playThanosEffect = async (target, effectContainer, onComplete) => {
   effectContainer.style.width = `${bRect.width}px`;
   effectContainer.style.height = `${bRect.height}px`;
 
+  // Ocultar el contenido original durante el efecto
+  target.classList.add('thanos-disappearing');
+  const imgElement = target.querySelector('img');
+  if (imgElement) {
+    imgElement.style.visibility = 'hidden';
+  }
+
   try {
-    const canvas = await html2canvas(target, {
-      backgroundColor: null,
+    const canvas = capturedCanvas || await html2canvas(target, {
+      backgroundColor: 'white',
     });
     
     const context = canvas.getContext('2d');
@@ -80,10 +87,20 @@ const playThanosEffect = async (target, effectContainer, onComplete) => {
     }
 
     // Esperar a que termine el efecto antes de completar
-    setTimeout(onComplete, 1000 * TRANSITION_DURATION);
+    setTimeout(() => {
+      // Restaurar clases y estilos
+      target.classList.remove('thanos-disappearing');
+      // Luego llamar al callback de completado
+      onComplete();
+    }, 1000 * TRANSITION_DURATION);
   } catch (error) {
     console.error("Error al aplicar efecto Thanos:", error);
-    onComplete(); // Asegurarse de que se complete incluso si hay error
+    // Si hay error, restaurar visibilidad y ejecutar onComplete
+    target.classList.remove('thanos-disappearing');
+    if (imgElement) {
+      imgElement.style.visibility = 'visible';
+    }
+    onComplete();
   }
 };
 
@@ -127,10 +144,22 @@ export const ImagePreview = ({ files, onRemove, multiple = false }) => {
       const container = effectContainerRef.current;
       container.innerHTML = '';
       
-      // Aplicar el efecto Thanos
-      playThanosEffect(targetEl, container, () => {
-        // Llamar a onRemove después de que termine el efecto
-        onRemove(index);
+      // Primero capturar la imagen original antes de cualquier cambio
+      html2canvas(targetEl, { 
+        backgroundColor: 'white',
+        removeContainer: false
+      }).then(canvas => {
+        // Añadir un fondo blanco a la imagen para evitar transparencias
+        const context = canvas.getContext('2d');
+        
+        // Luego aplicar el efecto Thanos (después de capturar la imagen)
+        playThanosEffect(targetEl, container, canvas, () => {
+          // Llamar a onRemove después de que termine el efecto
+          onRemove(index);
+        });
+      }).catch(err => {
+        console.error("Error al capturar imagen para efecto:", err);
+        onRemove(index); // Si falla, eliminar normalmente
       });
     } else {
       // Si no hay efecto, simplemente eliminar
