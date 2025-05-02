@@ -1,20 +1,23 @@
-import { useState, useEffect, useRef } from 'react'
-import { SingleConversion } from './pages/SingleConversion'
-import { MultipleConversion } from './pages/MultipleConversion'
-import { QualityControl } from './components/QualityControl'
-import { motion, AnimatePresence } from 'framer-motion'
-import { ImageConverterProvider, useImageConverterContext } from './context/ImageConverterContext'
-import './index.css'
+import { useState, useEffect, useRef } from "react";
+import { SingleConversion } from "./pages/SingleConversion";
+import { MultipleConversion } from "./pages/MultipleConversion";
+import { QualityControl } from "./components/QualityControl";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ImageConverterProvider,
+  useImageConverterContext,
+} from "./context/ImageConverterContext";
+import "./index.css";
 
 function AppContent() {
-  const [activeTab, setActiveTab] = useState('single');
+  const [activeTab, setActiveTab] = useState("single");
   const appRef = useRef(null);
   const [dragActive, setDragActive] = useState(false);
   const [dragCounter, setDragCounter] = useState(0);
-  
-  const { 
-    quality, 
-    setQuality, 
+
+  const {
+    quality,
+    setQuality,
     compressionInfo,
     isConverting,
     file,
@@ -24,7 +27,7 @@ function AppContent() {
     handleConvertIndividual,
     handleConvertMultiple,
     setCompressionInfo,
-    setPreviewUrls
+    setPreviewUrls,
   } = useImageConverterContext();
 
   useEffect(() => {
@@ -39,29 +42,29 @@ function AppContent() {
     const handlePaste = (e) => {
       if (e.clipboardData && e.clipboardData.files.length > 0) {
         // Verificar que son imágenes
-        const files = Array.from(e.clipboardData.files).filter(file => 
-          file.type.startsWith('image/')
+        const files = Array.from(e.clipboardData.files).filter((file) =>
+          file.type.startsWith("image/"),
         );
-        
+
         if (files.length === 0) return;
-        
+
         // Crear un evento personalizado con los archivos
-        const pasteEvent = new CustomEvent('app-paste', { 
-          detail: { 
+        const pasteEvent = new CustomEvent("app-paste", {
+          detail: {
             files,
-            multiple: activeTab === 'multiple'
-          }
+            multiple: activeTab === "multiple",
+          },
         });
-        
+
         // Disparar el evento para que los componentes lo capturen
         document.dispatchEvent(pasteEvent);
       }
     };
 
-    document.addEventListener('paste', handlePaste);
-    
+    document.addEventListener("paste", handlePaste);
+
     return () => {
-      document.removeEventListener('paste', handlePaste);
+      document.removeEventListener("paste", handlePaste);
     };
   }, [activeTab]);
 
@@ -69,10 +72,10 @@ function AppContent() {
   const handleDragEnter = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    setDragCounter(prev => prev + 1);
-    
-    if (e.dataTransfer.types.includes('Files')) {
+
+    setDragCounter((prev) => prev + 1);
+
+    if (e.dataTransfer.types.includes("Files")) {
       setDragActive(true);
     }
   };
@@ -80,9 +83,9 @@ function AppContent() {
   const handleDragLeave = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    setDragCounter(prev => prev - 1);
-    
+
+    setDragCounter((prev) => prev - 1);
+
     if (dragCounter - 1 === 0) {
       setDragActive(false);
     }
@@ -91,8 +94,8 @@ function AppContent() {
   const handleDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    if (e.dataTransfer.types.includes('Files') && !dragActive) {
+
+    if (e.dataTransfer.types.includes("Files") && !dragActive) {
       setDragActive(true);
     }
   };
@@ -102,21 +105,21 @@ function AppContent() {
     e.stopPropagation();
     setDragActive(false);
     setDragCounter(0);
-    
+
     if (e.dataTransfer.files.length > 0) {
-      const files = Array.from(e.dataTransfer.files).filter(file => 
-        file.type.startsWith('image/')
+      const files = Array.from(e.dataTransfer.files).filter((file) =>
+        file.type.startsWith("image/"),
       );
-      
+
       if (files.length === 0) return;
-      
-      const dropEvent = new CustomEvent('app-drop', { 
-        detail: { 
+
+      const dropEvent = new CustomEvent("app-drop", {
+        detail: {
           files,
-          multiple: activeTab === 'multiple'
-        }
+          multiple: activeTab === "multiple",
+        },
       });
-      
+
       document.dispatchEvent(dropEvent);
     }
   };
@@ -128,25 +131,26 @@ function AppContent() {
       e.stopPropagation();
     };
 
-    window.addEventListener('dragover', preventDefaults);
-    window.addEventListener('drop', preventDefaults);
-    
+    window.addEventListener("dragover", preventDefaults);
+    window.addEventListener("drop", preventDefaults);
+
     return () => {
-      window.removeEventListener('dragover', preventDefaults);
-      window.removeEventListener('drop', preventDefaults);
+      window.removeEventListener("dragover", preventDefaults);
+      window.removeEventListener("drop", preventDefaults);
     };
   }, []);
 
   // Determinar qué función de conversión usar basado en la pestaña activa
-  const handleConvert = activeTab === 'single' ? handleConvertIndividual : handleConvertMultiple;
-  
+  const handleConvert =
+    activeTab === "single" ? handleConvertIndividual : handleConvertMultiple;
+
   // Determinar si hay archivos para convertir
-  const hasFiles = activeTab === 'single' ? !!file : files.length;
+  const hasFiles = activeTab === "single" ? !!file : files.length;
 
   return (
-    <div 
+    <div
       ref={appRef}
-      className={`app ${dragActive ? 'drag-active' : ''}`}
+      className={`app ${dragActive ? "drag-active" : ""}`}
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -154,7 +158,7 @@ function AppContent() {
     >
       <AnimatePresence>
         {dragActive && (
-          <motion.div 
+          <motion.div
             className="global-drop-indicator"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -165,14 +169,14 @@ function AppContent() {
           </motion.div>
         )}
       </AnimatePresence>
-      
+
       <div className="background">
         <div className="bubbles"></div>
         <div className="wave"></div>
       </div>
-      
-      <QualityControl 
-        quality={quality} 
+
+      <QualityControl
+        quality={quality}
         onChange={setQuality}
         compressionInfo={compressionInfo}
         onConvert={handleConvert}
@@ -180,38 +184,38 @@ function AppContent() {
         hasFiles={hasFiles}
         mode={activeTab}
       />
-      
+
       <header className="header">
         <div className="header-content">
           <div className="logo">
             <img src="/favicon.svg" alt="Logo" />
             <span>WebP Converter</span>
           </div>
-          
+
           <nav className="main-nav">
             <div className="nav-container">
-              <motion.div 
+              <motion.div
                 className="active-indicator"
                 layoutId="activeIndicator"
                 initial={false}
-                animate={{ 
-                  x: activeTab === 'single' ? '0%' : '100%',
+                animate={{
+                  x: activeTab === "single" ? "0%" : "100%",
                 }}
                 transition={{
                   type: "spring",
                   stiffness: 500,
-                  damping: 30
+                  damping: 30,
                 }}
               />
-              <div 
-                className={`nav-item ${activeTab === 'single' ? 'active' : ''}`}
-                onClick={() => setActiveTab('single')}
+              <div
+                className={`nav-item ${activeTab === "single" ? "active" : ""}`}
+                onClick={() => setActiveTab("single")}
               >
                 Conversión Individual
               </div>
-              <div 
-                className={`nav-item ${activeTab === 'multiple' ? 'active' : ''}`}
-                onClick={() => setActiveTab('multiple')}
+              <div
+                className={`nav-item ${activeTab === "multiple" ? "active" : ""}`}
+                onClick={() => setActiveTab("multiple")}
               >
                 Conversión Múltiple
               </div>
@@ -219,11 +223,11 @@ function AppContent() {
           </nav>
         </div>
       </header>
-      
+
       <main className="main-content">
         <div className="content-container">
           <AnimatePresence mode="wait">
-            {activeTab === 'single' ? (
+            {activeTab === "single" ? (
               <motion.div
                 key="single"
                 className="tab-content"

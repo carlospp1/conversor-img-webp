@@ -1,15 +1,22 @@
-import { useState, useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
-export const QualityControl = ({ quality, onChange, compressionInfo, onConvert, isConverting, hasFiles }) => {
+export const QualityControl = ({
+  quality,
+  onChange,
+  compressionInfo,
+  onConvert,
+  isConverting,
+  hasFiles,
+}) => {
   const [isMobile, setIsMobile] = useState(false);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 768);
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   // Si no es móvil, el panel siempre está abierto
@@ -17,33 +24,37 @@ export const QualityControl = ({ quality, onChange, compressionInfo, onConvert, 
 
   // Función helper para formatear tamaños de archivo
   const formatFileSize = (bytes) => {
-    if (!bytes) return '';
-    if (bytes < 1024) return bytes + ' B';
-    else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
-    else return (bytes / 1048576).toFixed(2) + ' MB';
+    if (!bytes) return "";
+    if (bytes < 1024) return bytes + " B";
+    else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + " KB";
+    else return (bytes / 1048576).toFixed(2) + " MB";
   };
 
   // Función para determinar el color del slider basado en la calidad
   const getQualityColor = (quality) => {
-    if (quality >= 65 && quality <= 85) return 'green';
-    if (quality > 85 || (quality >= 45 && quality < 75)) return 'yellow';
-    return 'red';
+    if (quality >= 65 && quality <= 85) return "green";
+    if (quality > 85 || (quality >= 45 && quality < 75)) return "yellow";
+    return "red";
   };
 
   // Función para determinar el color del ahorro basado en el porcentaje
   const getSavingsColor = (percent) => {
-    if (percent >= 85) return 'green';
-    if (percent >= 70) return 'yellow';
-    return 'red';
+    if (percent >= 85) return "green";
+    if (percent >= 70) return "yellow";
+    return "red";
   };
 
   // Función para acortar el nombre del archivo si es muy largo
   const shortenFileName = (fileName, maxLength = 15) => {
     if (!fileName || fileName.length <= maxLength) return fileName;
-    const extension = fileName.split('.').pop();
+    const extension = fileName.split(".").pop();
     const name = fileName.substring(0, fileName.length - extension.length - 1);
     if (name.length <= maxLength - 3) return fileName;
-    return name.substring(0, maxLength - 3) + '...' + (extension ? '.' + extension : '');
+    return (
+      name.substring(0, maxLength - 3) +
+      "..." +
+      (extension ? "." + extension : "")
+    );
   };
 
   const qualityColor = getQualityColor(quality);
@@ -57,18 +68,32 @@ export const QualityControl = ({ quality, onChange, compressionInfo, onConvert, 
           aria-label="Mostrar control de calidad"
           onClick={() => setOpen(true)}
         >
-          <span role="img" aria-label="ajustes">⚙️</span>
+          <span role="img" aria-label="ajustes">
+            ⚙️
+          </span>
         </button>
       )}
       <AnimatePresence>
         {showPanel && (
           <motion.div
-            className={`quality-control${isMobile ? ' mobile' : ''}`}
+            className={`quality-control${isMobile ? " mobile" : ""}`}
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
             transition={{ duration: 0.25 }}
-            style={isMobile ? { position: 'fixed', bottom: '1rem', right: '1rem', width: '90vw', maxWidth: 340, zIndex: 200, paddingTop: '2.2rem' } : {}}
+            style={
+              isMobile
+                ? {
+                    position: "fixed",
+                    bottom: "1rem",
+                    right: "1rem",
+                    width: "90vw",
+                    maxWidth: 340,
+                    zIndex: 200,
+                    paddingTop: "2.2rem",
+                  }
+                : {}
+            }
           >
             {/* Botón de cerrar solo en móvil */}
             {isMobile && (
@@ -103,26 +128,36 @@ export const QualityControl = ({ quality, onChange, compressionInfo, onConvert, 
                   transition={{ duration: 0.3 }}
                 >
                   <div className="compression-row">
-                    <span>Nombre:</span> 
-                    <strong title={compressionInfo.name}>{shortenFileName(compressionInfo.name)}</strong>
+                    <span>Nombre:</span>
+                    <strong title={compressionInfo.name}>
+                      {shortenFileName(compressionInfo.name)}
+                    </strong>
                   </div>
                   <div className="compression-row">
-                    <span>Original:</span> 
-                    <strong>{formatFileSize(compressionInfo.originalSize)}</strong>
+                    <span>Original:</span>
+                    <strong>
+                      {formatFileSize(compressionInfo.originalSize)}
+                    </strong>
                   </div>
                   <div className="compression-row">
-                    <span>WebP:</span> 
-                    <strong>{formatFileSize(compressionInfo.compressedSize)}</strong>
+                    <span>WebP:</span>
+                    <strong>
+                      {formatFileSize(compressionInfo.compressedSize)}
+                    </strong>
                   </div>
                   <div className="compression-row">
-                    <span>Ahorro:</span> 
-                    <strong className={`savings-${getSavingsColor(compressionInfo.savingsPercent)}`}>
+                    <span>Ahorro:</span>
+                    <strong
+                      className={`savings-${getSavingsColor(compressionInfo.savingsPercent)}`}
+                    >
                       {compressionInfo.savingsPercent}%
                     </strong>
                   </div>
                   <div className="compression-row">
-                    <span>Dimensiones:</span> 
-                    <strong>{compressionInfo.width} × {compressionInfo.height}</strong>
+                    <span>Dimensiones:</span>
+                    <strong>
+                      {compressionInfo.width} × {compressionInfo.height}
+                    </strong>
                   </div>
                 </motion.div>
               </AnimatePresence>
@@ -134,11 +169,13 @@ export const QualityControl = ({ quality, onChange, compressionInfo, onConvert, 
                 onClick={onConvert}
                 disabled={!hasFiles || isConverting}
               >
-                {isConverting ? 'Procesando...' : (
-                  typeof hasFiles === 'number' && hasFiles > 1 ? 
-                  `Convertir ${hasFiles} imágenes` : 
-                  hasFiles ? 'Convertir a WebP' : 'Selecciona una imagen'
-                )}
+                {isConverting
+                  ? "Procesando..."
+                  : typeof hasFiles === "number" && hasFiles > 1
+                    ? `Convertir ${hasFiles} imágenes`
+                    : hasFiles
+                      ? "Convertir a WebP"
+                      : "Selecciona una imagen"}
               </button>
             )}
           </motion.div>
@@ -146,4 +183,4 @@ export const QualityControl = ({ quality, onChange, compressionInfo, onConvert, 
       </AnimatePresence>
     </>
   );
-}; 
+};

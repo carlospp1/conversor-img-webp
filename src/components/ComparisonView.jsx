@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export const ComparisonView = ({ originalImage, convertedImage, style }) => {
   const [position, setPosition] = useState(50);
@@ -13,13 +13,13 @@ export const ComparisonView = ({ originalImage, convertedImage, style }) => {
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
-    
+
     // Verificar al cargar y cuando cambie el tamaño de la ventana
     checkIfMobile();
-    window.addEventListener('resize', checkIfMobile);
-    
+    window.addEventListener("resize", checkIfMobile);
+
     return () => {
-      window.removeEventListener('resize', checkIfMobile);
+      window.removeEventListener("resize", checkIfMobile);
     };
   }, []);
 
@@ -27,27 +27,27 @@ export const ComparisonView = ({ originalImage, convertedImage, style }) => {
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (!isDragging || !containerRef.current) return;
-      
+
       const rect = containerRef.current.getBoundingClientRect();
       let newPosition = ((e.clientX - rect.left) / rect.width) * 100;
-      
+
       // Limitar la posición entre 0 y 100
       newPosition = Math.max(0, Math.min(100, newPosition));
       setPosition(newPosition);
     };
-     
+
     const handleMouseUp = () => {
       setIsDragging(false);
     };
-    
+
     if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
     }
-    
+
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isDragging]);
 
@@ -60,11 +60,11 @@ export const ComparisonView = ({ originalImage, convertedImage, style }) => {
   // Manejar el evento de toque (para dispositivos móviles)
   const handleTouch = (e) => {
     if (!containerRef.current) return;
-    
+
     const rect = containerRef.current.getBoundingClientRect();
     const touch = e.touches[0];
     let newPosition = ((touch.clientX - rect.left) / rect.width) * 100;
-    
+
     // Limitar la posición entre 0 y 100
     newPosition = Math.max(0, Math.min(100, newPosition));
     setPosition(newPosition);
@@ -73,8 +73,8 @@ export const ComparisonView = ({ originalImage, convertedImage, style }) => {
   if (!originalImage || !convertedImage) return null;
 
   return (
-    <div 
-      className={`comparison-view ${isMobile ? 'mobile-view' : ''}`}
+    <div
+      className={`comparison-view ${isMobile ? "mobile-view" : ""}`}
       ref={containerRef}
       style={style}
     >
@@ -93,14 +93,14 @@ export const ComparisonView = ({ originalImage, convertedImage, style }) => {
             </div>
           )}
           <div className="mobile-controls">
-            <button 
-              className={`mobile-control-btn ${showOriginal ? 'active' : ''}`}
+            <button
+              className={`mobile-control-btn ${showOriginal ? "active" : ""}`}
               onClick={() => setShowOriginal(true)}
             >
               Original
             </button>
-            <button 
-              className={`mobile-control-btn ${!showOriginal ? 'active' : ''}`}
+            <button
+              className={`mobile-control-btn ${!showOriginal ? "active" : ""}`}
               onClick={() => setShowOriginal(false)}
             >
               WebP
@@ -114,18 +114,18 @@ export const ComparisonView = ({ originalImage, convertedImage, style }) => {
             <img src={convertedImage} alt="WebP" />
             <div className="comparison-label right">WebP</div>
           </div>
-          
-          <div 
+
+          <div
             className="comparison-layer comparison-original"
-            style={{ 
-              clipPath: `inset(0 ${100 - position}% 0 0)` 
+            style={{
+              clipPath: `inset(0 ${100 - position}% 0 0)`,
             }}
           >
             <img src={originalImage} alt="Original" />
             <div className="comparison-label left">Original</div>
           </div>
-          
-          <div 
+
+          <div
             className="comparison-slider"
             style={{ left: `${position}%` }}
             onMouseDown={handleMouseDown}
@@ -139,4 +139,4 @@ export const ComparisonView = ({ originalImage, convertedImage, style }) => {
       )}
     </div>
   );
-}; 
+};
