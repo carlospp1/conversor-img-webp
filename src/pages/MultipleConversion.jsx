@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { DropZone } from '../components/DropZone';
 import { ImagePreview } from '../components/ImagePreview';
 import { useImageConverter } from '../hooks/useImageConverter.js';
+import { useImageConverterContext } from '../context/ImageConverterContext.jsx';
 
 // Función helper para formatear tamaños de archivo
 const formatFileSize = (bytes) => {
@@ -31,12 +32,17 @@ export const MultipleConversion = () => {
   const [compressionStats, setCompressionStats] = useState(null);
   
   const { quality, setQuality, convertMultiple, downloadFile } = useImageConverter();
+  const { setFiles: setContextFiles } = useImageConverterContext();
 
   // Escuchar el evento de pegado global
   useEffect(() => {
     const handleGlobalPaste = (e) => {
       if (e.detail.multiple && e.detail.files.length > 0) {
-        setFiles(prevFiles => [...prevFiles, ...e.detail.files]);
+        setFiles(prevFiles => {
+          const updated = [...prevFiles, ...e.detail.files];
+          setContextFiles(updated);
+          return updated;
+        });
       }
     };
 
@@ -51,7 +57,11 @@ export const MultipleConversion = () => {
   useEffect(() => {
     const handleGlobalDrop = (e) => {
       if (e.detail.multiple && e.detail.files.length > 0) {
-        setFiles(prevFiles => [...prevFiles, ...e.detail.files]);
+        setFiles(prevFiles => {
+          const updated = [...prevFiles, ...e.detail.files];
+          setContextFiles(updated);
+          return updated;
+        });
       }
     };
 
@@ -63,12 +73,15 @@ export const MultipleConversion = () => {
   }, []);
 
   const handleFilesDrop = (newFiles) => {
-    setFiles([...files, ...newFiles]);
+    const updated = [...files, ...newFiles];
+    setFiles(updated);
+    setContextFiles(updated);
   };
 
   const handleRemove = (index) => {
     const newFiles = files.filter((_, i) => i !== index);
     setFiles(newFiles);
+    setContextFiles(newFiles);
     if (newFiles.length === 0) {
       setCompressionStats(null);
     }
@@ -77,6 +90,7 @@ export const MultipleConversion = () => {
   // Función para limpiar imágenes y detalles
   const handleClearAll = () => {
     setFiles([]);
+    setContextFiles([]);
     setCompressionStats(null);
   };
 
