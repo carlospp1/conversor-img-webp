@@ -20,6 +20,10 @@ export const SingleConversion = () => {
     setPreviewUrls,
     setCompressionInfo
   } = useImageConverterContext();
+  // Estado para mostrar el modal de zoom
+  const [showZoom, setShowZoom] = useState(false);
+  // Detectar entorno web (no Electron)
+  const isWeb = typeof navigator !== 'undefined' && !navigator.userAgent.includes('Electron');
 
   // Escuchar el evento de pegado global
   useEffect(() => {
@@ -73,6 +77,47 @@ export const SingleConversion = () => {
   };
 
   return (
+    <>
+    {/* Modal de zoom con comparador */}
+    {isWeb && (
+      <AnimatePresence>
+        {showZoom && (
+          <motion.div
+            className="zoom-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowZoom(false)}
+          >
+            <motion.div
+              className="zoom-modal"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="comparison-container">
+                <ComparisonView 
+                  originalImage={previewUrls.original} 
+                  convertedImage={previewUrls.webp} 
+                />
+              </div>
+              <div className="button-container" style={{ textAlign: 'center' }}>
+                <motion.button
+                  className="convert-button panel-button"
+                  onClick={() => setShowZoom(false)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Cerrar Zoom
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    )}
     <motion.div 
       className="container"
       initial={{ opacity: 0 }}
@@ -101,6 +146,19 @@ export const SingleConversion = () => {
             <div className="image-preview">
               <div className="image-preview-title">
                 Vista previa
+                
+                {isWeb && (
+                      <motion.button 
+                        className="clear-button" 
+                        onClick={() => setShowZoom(true)}
+                        title="Ampliar imagen para comparar mejor"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        style={{ backgroundColor: 'var(--primary-color)' }}
+                      >
+                        Zoom
+                      </motion.button>
+                    )}
                 <motion.button 
                   className="clear-button" 
                   onClick={handleResetImage}
@@ -111,6 +169,7 @@ export const SingleConversion = () => {
                   Borrar imagen
                 </motion.button>
               </div>
+
               
               <AnimatePresence mode="wait">
                 {previewUrls?.original && previewUrls?.webp ? (
@@ -143,5 +202,6 @@ export const SingleConversion = () => {
         )}
       </AnimatePresence>
     </motion.div>
+    </>
   );
 }; 

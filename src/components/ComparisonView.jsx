@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-export const ComparisonView = ({ originalImage, convertedImage }) => {
+export const ComparisonView = ({ originalImage, convertedImage, style }) => {
   const [position, setPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef(null);
@@ -17,7 +17,7 @@ export const ComparisonView = ({ originalImage, convertedImage }) => {
       newPosition = Math.max(0, Math.min(100, newPosition));
       setPosition(newPosition);
     };
-    
+     
     const handleMouseUp = () => {
       setIsDragging(false);
     };
@@ -58,6 +58,7 @@ export const ComparisonView = ({ originalImage, convertedImage }) => {
     <div 
       className="comparison-view" 
       ref={containerRef}
+      style={style}
     >
       {/* Imagen convertida (WebP) como capa base */}
       <div className="comparison-layer comparison-webp">

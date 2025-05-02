@@ -21,7 +21,9 @@ const getSavingsColor = (percent) => {
 };
 
 export const MultipleConversion = () => {
-  const [files, setFiles] = useState([]);
+  // Usamos archivos desde el contexto
+  const { files, setFiles } = useImageConverterContext();
+  const { quality, setQuality, convertMultiple, downloadFile } = useImageConverter();
   const [isConverting, setIsConverting] = useState(false);
   const [progressStatus, setProgressStatus] = useState({
     total: 0,
@@ -30,19 +32,12 @@ export const MultipleConversion = () => {
     startTime: null
   });
   const [compressionStats, setCompressionStats] = useState(null);
-  
-  const { quality, setQuality, convertMultiple, downloadFile } = useImageConverter();
-  const { setFiles: setContextFiles } = useImageConverterContext();
 
   // Escuchar el evento de pegado global
   useEffect(() => {
     const handleGlobalPaste = (e) => {
       if (e.detail.multiple && e.detail.files.length > 0) {
-        setFiles(prevFiles => {
-          const updated = [...prevFiles, ...e.detail.files];
-          setContextFiles(updated);
-          return updated;
-        });
+        setFiles(prev => [...prev, ...e.detail.files]);
       }
     };
 
@@ -57,11 +52,7 @@ export const MultipleConversion = () => {
   useEffect(() => {
     const handleGlobalDrop = (e) => {
       if (e.detail.multiple && e.detail.files.length > 0) {
-        setFiles(prevFiles => {
-          const updated = [...prevFiles, ...e.detail.files];
-          setContextFiles(updated);
-          return updated;
-        });
+        setFiles(prev => [...prev, ...e.detail.files]);
       }
     };
 
@@ -73,24 +64,18 @@ export const MultipleConversion = () => {
   }, []);
 
   const handleFilesDrop = (newFiles) => {
-    const updated = [...files, ...newFiles];
-    setFiles(updated);
-    setContextFiles(updated);
+    setFiles(prev => [...prev, ...newFiles]);
   };
 
   const handleRemove = (index) => {
     const newFiles = files.filter((_, i) => i !== index);
     setFiles(newFiles);
-    setContextFiles(newFiles);
-    if (newFiles.length === 0) {
-      setCompressionStats(null);
-    }
+    if (newFiles.length === 0) setCompressionStats(null);
   };
 
   // Función para limpiar imágenes y detalles
   const handleClearAll = () => {
     setFiles([]);
-    setContextFiles([]);
     setCompressionStats(null);
   };
 
