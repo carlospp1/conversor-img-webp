@@ -1,18 +1,21 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
+import { motion } from 'framer-motion';
 
 export const DropZone = ({ onFilesDrop, multiple = false, compact = false }) => {
+  const [isActive, setIsActive] = useState(false);
+
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
-    e.currentTarget.classList.add('active');
+    setIsActive(true);
   }, []);
 
   const handleDragLeave = useCallback((e) => {
-    e.currentTarget.classList.remove('active');
+    setIsActive(false);
   }, []);
 
   const handleDrop = useCallback((e) => {
     e.preventDefault();
-    e.currentTarget.classList.remove('active');
+    setIsActive(false);
     const files = multiple ? Array.from(e.dataTransfer.files) : [e.dataTransfer.files[0]];
     onFilesDrop(files);
   }, [multiple, onFilesDrop]);
@@ -37,33 +40,85 @@ export const DropZone = ({ onFilesDrop, multiple = false, compact = false }) => 
     }
   }, [multiple, onFilesDrop]);
 
+  // Variantes para animaciones
+  const dropzoneVariants = {
+    hover: { 
+      backgroundColor: "rgba(0, 153, 255, 0.08)"
+    },
+    active: { 
+      backgroundColor: "rgba(0, 153, 255, 0.12)"
+    }
+  };
+
+  const iconVariants = {
+    initial: { scale: 1 },
+    hover: { scale: 1.1 },
+    active: { scale: 1.15 },
+    pulse: {
+      scale: [1, 1.1, 1],
+      transition: { 
+        duration: 2,
+        repeat: Infinity,
+        repeatType: "reverse"
+      }
+    }
+  };
+
   return (
-    <div
-      className={`drop-zone ${compact ? 'compact' : ''}`}
+    <motion.div
+      className={`drop-zone ${compact ? 'compact' : ''} ${isActive ? 'active' : ''}`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onClick={handleClick}
       onPaste={handlePaste}
       tabIndex="0"
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 20 }}
+      transition={{ duration: 0.3 }}
+      whileHover={dropzoneVariants.hover}
+      variants={dropzoneVariants}
     >
       {!compact ? (
         <>
-          <img src="/image-icon.svg" alt="Subir imagen" />
-          <div className="drop-zone-text">
-            Arrastra O Pega
-          </div>
-          <div className="drop-zone-hint">
+          <motion.img 
+            src={multiple ? "/multiple-images-icon.svg" : "/image-icon.svg"} 
+            alt={multiple ? "Subir múltiples imágenes" : "Subir imagen"} 
+            variants={iconVariants}
+            initial="initial"
+            animate="pulse"
+            whileHover="hover"
+          />
+          <motion.div 
+            className="drop-zone-text"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.3 }}
+          >
+            Arrastra O Pega {multiple ? "Imágenes" : ""}
+          </motion.div>
+          <motion.div 
+            className="drop-zone-hint"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.3 }}
+          >
             (También puedes hacer clic para seleccionar {multiple ? 'archivos' : 'un archivo'})
-          </div>
+          </motion.div>
         </>
       ) : (
         <>
-          <div className="drop-zone-text compact">
+          <motion.div 
+            className="drop-zone-text compact"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
             Arrastra más imágenes aquí o haz clic para añadir
-          </div>
+          </motion.div>
         </>
       )}
-    </div>
+    </motion.div>
   );
 }; 

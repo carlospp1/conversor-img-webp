@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { DropZone } from '../components/DropZone';
-import { QualityControl } from '../components/QualityControl';
 import { ImagePreview } from '../components/ImagePreview';
 import { useImageConverter } from '../hooks/useImageConverter.js';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Función helper para formatear tamaños de archivo
 const formatFileSize = (bytes) => {
@@ -19,9 +19,13 @@ const getSavingsColor = (percent) => {
   return 'red';
 };
 
-export const MultipleConversion = () => {
-  const [files, setFiles] = useState([]);
-  const [isConverting, setIsConverting] = useState(false);
+export const MultipleConversion = ({ 
+  files, 
+  setFiles, 
+  isConverting, 
+  setIsConverting, 
+  quality 
+}) => {
   const [progressStatus, setProgressStatus] = useState({
     total: 0,
     current: 0,
@@ -30,7 +34,7 @@ export const MultipleConversion = () => {
   });
   const [compressionStats, setCompressionStats] = useState(null);
   
-  const { quality, setQuality, convertMultiple, downloadFile } = useImageConverter();
+  const { convertMultiple, downloadFile } = useImageConverter();
 
   // Escuchar el evento de pegado global
   useEffect(() => {
@@ -45,7 +49,7 @@ export const MultipleConversion = () => {
     return () => {
       document.removeEventListener('app-paste', handleGlobalPaste);
     };
-  }, []);
+  }, [setFiles]);
 
   // Escuchar el evento de arrastrar y soltar global
   useEffect(() => {
@@ -60,10 +64,10 @@ export const MultipleConversion = () => {
     return () => {
       document.removeEventListener('app-drop', handleGlobalDrop);
     };
-  }, []);
+  }, [setFiles]);
 
   const handleFilesDrop = (newFiles) => {
-    setFiles([...files, ...newFiles]);
+    setFiles(prevFiles => [...prevFiles, ...newFiles]);
   };
 
   const handleRemove = (index) => {
@@ -166,81 +170,113 @@ export const MultipleConversion = () => {
 
   return (
     <div className="container">
-
-      <QualityControl 
-        quality={quality} 
-        onChange={setQuality}
-        onConvert={handleConvert}
-        isConverting={isConverting}
-        hasFiles={files.length}
-      />
-      
-      {files.length === 0 ? (
-        <DropZone onFilesDrop={handleFilesDrop} multiple={true} />
-      ) : (
-        <div className="image-preview">
-          <div className="image-preview-title">
-            Imágenes seleccionadas ({files.length})
-            <button 
-              className="clear-button" 
-              onClick={handleClearAll}
-            >
-              Eliminar todas
-            </button>
-          </div>
-          <ImagePreview files={files} onRemove={handleRemove} multiple={true} />
-        </div>
-      )}
+      <AnimatePresence mode="wait">
+        {files.length === 0 ? (
+          <motion.div
+            key="dropzone"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <DropZone onFilesDrop={handleFilesDrop} multiple={true} />
+          </motion.div>
+        ) : (
+          <motion.div 
+            className="image-preview"
+            key="preview"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="image-preview-title">
+              Imágenes seleccionadas ({files.length})
+              <motion.button 
+                className="clear-button" 
+                onClick={handleClearAll}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Eliminar todas
+              </motion.button>
+            </div>
+            <ImagePreview files={files} onRemove={handleRemove} multiple={true} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Tarjeta de información y progreso */}
-      {(showProgressBar || compressionStats) && (
-        <div className="info-card">
-          {showProgressBar && (
-            <div className="progress-container">
-              <div className="progress-bar">
-                <div 
-                  className="progress-fill" 
-                  style={{ width: `${progressPercent}%` }}
-                ></div>
-              </div>
-              <div className="progress-text">
-                {progressStatus.message || `Procesando ${progressStatus.current} de ${progressStatus.total}`}
-              </div>
-              {progressStatus.startTime && (
-                <div className="progress-details">
-                  {progressPercent}% completado
+      <AnimatePresence>
+        {(showProgressBar || compressionStats) && (
+          <motion.div 
+            className="info-card"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ 
+              duration: 0.4,
+              type: "spring",
+              stiffness: 300,
+              damping: 25
+            }}
+          >
+            {showProgressBar && (
+              <div className="progress-container">
+                <div className="progress-bar">
+                  <motion.div 
+                    className="progress-fill" 
+                    initial={{ width: 0 }}
+                    animate={{ 
+                      width: `${progressPercent}%` 
+                    }}
+                    transition={{ type: "spring", stiffness: 100, damping: 20 }}
+                  ></motion.div>
                 </div>
-              )}
-            </div>
-          )}
-          
-          {compressionStats && (
-            <div className="compression-stats-panel">
-              <div className="compression-stats-row">
-                <span>Original:</span>
-                <strong>{formatFileSize(compressionStats.totalOriginalSize)}</strong>
+                <div className="progress-text">
+                  {progressStatus.message || `Procesando ${progressStatus.current} de ${progressStatus.total}`}
+                </div>
+                {progressStatus.startTime && (
+                  <div className="progress-details">
+                    {progressPercent}% completado
+                  </div>
+                )}
               </div>
-              <div className="compression-stats-row">
-                <span>WebP:</span>
-                <strong>{formatFileSize(compressionStats.totalCompressedSize)}</strong>
-              </div>
-              <div className="compression-stats-row">
-                <span>Ahorro:</span>
-                <strong className={`savings-${getSavingsColor(compressionStats.savingsPercent)}`}>
-                  {compressionStats.savingsPercent}%
-                </strong>
-              </div>
-              <div className="compression-stats-row">
-                <span>Imágenes:</span>
-                <strong>{compressionStats.totalCount}</strong>
-              </div>
-              <div className="compression-stats-info">
-                Puedes volver a convertir las mismas imágenes con otra calidad usando el botón en el panel inferior derecho o cargar nuevas haciendo click en "Eliminar todo"
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+            )}
+            
+            {compressionStats && (
+              <motion.div 
+                className="compression-stats-panel"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                <div className="compression-stats-row">
+                  <span>Original:</span>
+                  <strong>{formatFileSize(compressionStats.totalOriginalSize)}</strong>
+                </div>
+                <div className="compression-stats-row">
+                  <span>WebP:</span>
+                  <strong>{formatFileSize(compressionStats.totalCompressedSize)}</strong>
+                </div>
+                <div className="compression-stats-row">
+                  <span>Ahorro:</span>
+                  <strong className={`savings-${getSavingsColor(compressionStats.savingsPercent)}`}>
+                    {compressionStats.savingsPercent}%
+                  </strong>
+                </div>
+                <div className="compression-stats-row">
+                  <span>Imágenes:</span>
+                  <strong>{compressionStats.totalCount}</strong>
+                </div>
+                <div className="compression-stats-info">
+                  Puedes volver a convertir las mismas imágenes con otra calidad usando el botón en el panel inferior derecho o cargar nuevas haciendo click en "Eliminar todo"
+                </div>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }; 
