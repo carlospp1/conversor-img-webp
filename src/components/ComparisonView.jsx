@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
 
 export const ComparisonView = ({ originalImage, convertedImage }) => {
   const [position, setPosition] = useState(50);
@@ -56,30 +55,14 @@ export const ComparisonView = ({ originalImage, convertedImage }) => {
   if (!originalImage || !convertedImage) return null;
 
   return (
-    <motion.div 
+    <div 
       className="comparison-view" 
       ref={containerRef}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
     >
       {/* Imagen convertida (WebP) como capa base */}
       <div className="comparison-layer comparison-webp">
-        <motion.img 
-          src={convertedImage} 
-          alt="WebP" 
-          initial={{ filter: "blur(10px)" }}
-          animate={{ filter: "blur(0px)" }}
-          transition={{ duration: 0.7 }}
-        />
-        <motion.div 
-          className="comparison-label right"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.3 }}
-        >
-          WebP
-        </motion.div>
+        <img src={convertedImage} alt="WebP" />
+        <div className="comparison-label right">WebP</div>
       </div>
       
       {/* Imagen original con clip-path */}
@@ -89,39 +72,21 @@ export const ComparisonView = ({ originalImage, convertedImage }) => {
           clipPath: `inset(0 ${100 - position}% 0 0)` 
         }}
       >
-        <motion.img 
-          src={originalImage} 
-          alt="Original" 
-          initial={{ filter: "blur(10px)" }}
-          animate={{ filter: "blur(0px)" }}
-          transition={{ duration: 0.7 }}
-        />
-        <motion.div 
-          className="comparison-label left"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.3 }}
-        >
-          Original
-        </motion.div>
+        <img src={originalImage} alt="Original" />
+        <div className="comparison-label left">Original</div>
       </div>
       
       {/* Deslizador */}
-      <motion.div 
+      <div 
         className="comparison-slider"
         style={{ left: `${position}%` }}
         onMouseDown={handleMouseDown}
         onTouchStart={() => setIsDragging(true)}
         onTouchMove={handleTouch}
         onTouchEnd={() => setIsDragging(false)}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5, duration: 0.3 }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
       >
         <div className="comparison-handle"></div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }; 

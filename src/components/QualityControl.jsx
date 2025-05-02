@@ -1,14 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
-
-export const QualityControl = ({ 
-  quality, 
-  onChange, 
-  compressionInfo, 
-  onConvert, 
-  isConverting, 
-  hasFiles,
-  mode = 'single' // 'single' o 'multiple'
-}) => {
+export const QualityControl = ({ quality, onChange, compressionInfo, onConvert, isConverting, hasFiles }) => {
   // Función helper para formatear tamaños de archivo
   const formatFileSize = (bytes) => {
     if (!bytes) return '';
@@ -46,13 +36,7 @@ export const QualityControl = ({
   const qualityColor = getQualityColor(quality);
 
   return (
-    <motion.div 
-      className="quality-control"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
-      style={{ position: 'fixed', bottom: '1.5rem', right: '1.5rem' }}
-    >
+    <div className="quality-control">
       <div className="quality-control-header">
         <div className="quality-text">Calidad de compresión</div>
         <div className={`quality-value ${qualityColor}`}>{quality}%</div>
@@ -67,62 +51,47 @@ export const QualityControl = ({
         aria-label="Control de calidad"
       />
       
-      <AnimatePresence mode="wait">
-        {compressionInfo && mode === 'single' && (
-          <motion.div 
-            key="compression-info"
-            className="compression-summary"
-            initial={{ opacity: 0, height: 0, overflow: 'hidden' }}
-            animate={{ opacity: 1, height: 'auto', overflow: 'visible' }}
-            exit={{ opacity: 0, height: 0, overflow: 'hidden' }}
-            transition={{ 
-              opacity: { duration: 0.3 },
-              height: { duration: 0.3 }
-            }}
-          >
-            <div className="compression-row">
-              <span>Nombre:</span> 
-              <strong title={compressionInfo.name}>{shortenFileName(compressionInfo.name)}</strong>
-            </div>
-            <div className="compression-row">
-              <span>Original:</span> 
-              <strong>{formatFileSize(compressionInfo.originalSize)}</strong>
-            </div>
-            <div className="compression-row">
-              <span>WebP:</span> 
-              <strong>{formatFileSize(compressionInfo.compressedSize)}</strong>
-            </div>
-            <div className="compression-row">
-              <span>Ahorro:</span> 
-              <strong className={`savings-${getSavingsColor(compressionInfo.savingsPercent)}`}>
-                {compressionInfo.savingsPercent}%
-              </strong>
-            </div>
-            <div className="compression-row">
-              <span>Dimensiones:</span> 
-              <strong>{compressionInfo.width} × {compressionInfo.height}</strong>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {compressionInfo && (
+        <div className="compression-summary">
+          <div className="compression-row">
+            <span>Nombre:</span> 
+            <strong title={compressionInfo.name}>{shortenFileName(compressionInfo.name)}</strong>
+          </div>
+          <div className="compression-row">
+            <span>Original:</span> 
+            <strong>{formatFileSize(compressionInfo.originalSize)}</strong>
+          </div>
+          <div className="compression-row">
+            <span>WebP:</span> 
+            <strong>{formatFileSize(compressionInfo.compressedSize)}</strong>
+          </div>
+          <div className="compression-row">
+            <span>Ahorro:</span> 
+            <strong className={`savings-${getSavingsColor(compressionInfo.savingsPercent)}`}>
+              {compressionInfo.savingsPercent}%
+            </strong>
+          </div>
+          <div className="compression-row">
+            <span>Dimensiones:</span> 
+            <strong>{compressionInfo.width} × {compressionInfo.height}</strong>
+          </div>
+        </div>
+      )}
       
       {/* Botón de convertir/descargar */}
       {onConvert && (
-        <motion.button
+        <button
           className="convert-button panel-button"
           onClick={onConvert}
           disabled={!hasFiles || isConverting}
-          whileHover={!isConverting && hasFiles ? { scale: 1.03 } : {}}
-          whileTap={!isConverting && hasFiles ? { scale: 0.97 } : {}}
-          transition={{ duration: 0.2 }}
         >
           {isConverting ? 'Procesando...' : (
             typeof hasFiles === 'number' && hasFiles > 1 ? 
             `Descargar ${hasFiles} imágenes` : 
             hasFiles ? 'Descargar WebP' : 'Selecciona una imagen'
           )}
-        </motion.button>
+        </button>
       )}
-    </motion.div>
+    </div>
   );
 }; 

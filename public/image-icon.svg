@@ -1,15 +1,6 @@
-<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Marco de la imagen -->
-  <rect x="8" y="8" width="48" height="48" rx="6" fill="#FFFFFF" stroke="#0099FF" stroke-width="2"/>
-  
-  <!-- Montaña en la imagen -->
-  <path d="M18 42L28 32L38 42H18Z" fill="#90CAF9"/>
-  <path d="M28 32L38 42L52 34V46H18V40L28 32Z" fill="#64B5F6"/>
-  
-  <!-- Sol en la imagen -->
-  <circle cx="48" cy="18" r="6" fill="#FFCC80"/>
-  
-  <!-- Árbol pequeño -->
-  <path d="M18 32L22 26L26 32H18Z" fill="#81C784"/>
-  <rect x="21" y="32" width="2" height="4" fill="#4CAF50"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+  <path d="M6 10C6 7.79086 7.79086 6 10 6H30C32.2091 6 34 7.79086 34 10V30C34 32.2091 32.2091 34 30 34H10C7.79086 34 6 32.2091 6 30V10Z" fill="white" stroke="#FF3366" stroke-width="2"/>
+  <path d="M13 24L18 19L22 23L28 17" stroke="#FF3366" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="15" cy="15" r="2" fill="#FF3366"/>
+  <path d="M38 28H42M40 26V30" stroke="#FF3366" stroke-width="2" stroke-linecap="round"/>
 </svg> 
