@@ -165,16 +165,16 @@ export const MultipleConversion = () => {
   const showProgressBar = isConverting;
 
   return (
-    <div className="container">
-
-      <QualityControl 
+    <>
+    
+    <QualityControl 
         quality={quality} 
         onChange={setQuality}
         onConvert={handleConvert}
         isConverting={isConverting}
         hasFiles={files.length}
       />
-      
+    <div className="container">      
       {files.length === 0 ? (
         <DropZone onFilesDrop={handleFilesDrop} multiple={true} />
       ) : (
@@ -242,5 +242,6 @@ export const MultipleConversion = () => {
         </div>
       )}
     </div>
+    </>
   );
 }; 

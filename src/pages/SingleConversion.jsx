@@ -126,39 +126,7 @@ export const SingleConversion = () => {
   }, []);
 
   return (
-    <div className="container">
-      {!file ? (
-        <DropZone onFilesDrop={handleFilesDrop} />
-      ) : (
-        <>
-          <div className="image-preview">
-            <div className="image-preview-title">
-              Vista previa
-              <button 
-                className="clear-button" 
-                onClick={handleResetImage}
-                title="Borrar y subir una nueva imagen"
-              >
-                Borrar imagen
-              </button>
-            </div>
-            
-            {previewUrls?.original && previewUrls?.webp ? (
-              <div className="comparison-container">
-                <ComparisonView 
-                  originalImage={previewUrls.original} 
-                  convertedImage={previewUrls.webp} 
-                />
-              </div>
-            ) : (
-              <div className="single-image-container">
-                <ImagePreview files={[file]} onRemove={() => setFile(null)} />
-              </div>
-            )}
-          </div>
-        </>
-      )}
-
+    <>
       <QualityControl 
         quality={quality} 
         onChange={setQuality} 
@@ -167,6 +135,40 @@ export const SingleConversion = () => {
         isConverting={isConverting}
         hasFiles={!!file}
       />
-    </div>
+      
+      <div className="container">
+        {!file ? (
+          <DropZone onFilesDrop={handleFilesDrop} />
+        ) : (
+          <>
+            <div className="image-preview">
+              <div className="image-preview-title">
+                Vista previa
+                <button 
+                  className="clear-button" 
+                  onClick={handleResetImage}
+                  title="Borrar y subir una nueva imagen"
+                >
+                  Borrar imagen
+                </button>
+              </div>
+              
+              {previewUrls?.original && previewUrls?.webp ? (
+                <div className="comparison-container">
+                  <ComparisonView 
+                    originalImage={previewUrls.original} 
+                    convertedImage={previewUrls.webp} 
+                  />
+                </div>
+              ) : (
+                <div className="single-image-container">
+                  <ImagePreview files={[file]} onRemove={() => setFile(null)} />
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </>
   );
 }; 
