@@ -20,6 +20,8 @@ export const ImageConverterProvider = ({ children }) => {
   const [file, setFile] = useState(null);
   const [files, setFiles] = useState([]);
   const [isConverting, setIsConverting] = useState(false);
+  const [compressionStats, setCompressionStats] = useState(null);
+  const [showStats, setShowStats] = useState(false);
 
   // Manejar generación de previews como función estable
   const generatePreview = useCallback(async (fileToConvert) => {
@@ -86,7 +88,10 @@ export const ImageConverterProvider = ({ children }) => {
     if (!files.length || isConverting) return;
     
     try {
+      // Limpiar estados al iniciar
       setIsConverting(true);
+      setCompressionStats(null);
+      setShowStats(false);
       
       // Función de actualización de progreso
       const updateProgress = (current, fileName) => {
@@ -101,11 +106,11 @@ export const ImageConverterProvider = ({ children }) => {
       await new Promise(resolve => setTimeout(resolve, 100));
       
       // Realizar la conversión
-      const { blob, results, compressionStats } = await convertMultiple(files, updateProgress);
+      const { blob, results, compressionStats: stats } = await convertMultiple(files, updateProgress);
       
       // Enviar evento de estadísticas finales
       const statsEvent = new CustomEvent('conversion-stats', {
-        detail: { compressionStats }
+        detail: { compressionStats: stats }
       });
       document.dispatchEvent(statsEvent);
       
@@ -120,15 +125,23 @@ export const ImageConverterProvider = ({ children }) => {
       // Descargar el archivo ZIP generado
       const success = downloadFile(blob, fileName);
       
+      // Guardar stats para usarlos después del timeout
+      const finalStats = stats;
+      
       // Mantener el estado de conversión activo por un momento para que se pueda ver el mensaje
       setTimeout(() => {
         setIsConverting(false);
+        // Solo después de que isConverting sea false, mostrar las estadísticas
+        setCompressionStats(finalStats);
+        setShowStats(true);
       }, 1500);
       
-      return { success, compressionStats };
+      return { success, compressionStats: stats };
     } catch (error) {
       console.error('Error en conversión múltiple:', error);
       setIsConverting(false);
+      setCompressionStats(null);
+      setShowStats(false);
       throw error;
     }
   };
@@ -146,7 +159,11 @@ export const ImageConverterProvider = ({ children }) => {
     setPreviewUrls,
     handleConvertIndividual,
     handleConvertMultiple,
-    setCompressionInfo
+    setCompressionInfo,
+    compressionStats,
+    setCompressionStats,
+    showStats,
+    setShowStats
   };
 
   return (

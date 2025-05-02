@@ -21,8 +21,18 @@ const getSavingsColor = (percent) => {
 };
 
 export const MultipleConversion = () => {
-  // Usamos archivos desde el contexto
-  const { files, setFiles, isConverting, handleConvertMultiple } = useImageConverterContext();
+  // Usamos archivos y estados desde el contexto global
+  const { 
+    files, 
+    setFiles, 
+    isConverting, 
+    handleConvertMultiple,
+    compressionStats,
+    setCompressionStats,
+    showStats,
+    setShowStats
+  } = useImageConverterContext();
+  
   const { quality, setQuality, convertMultiple, downloadFile } = useImageConverter();
   
   const [progressStatus, setProgressStatus] = useState({
@@ -31,8 +41,6 @@ export const MultipleConversion = () => {
     message: '',
     startTime: null
   });
-  const [compressionStats, setCompressionStats] = useState(null);
-  const [showStats, setShowStats] = useState(false);
 
   // Observador para isConverting del contexto - para iniciar el progreso
   useEffect(() => {
@@ -44,24 +52,18 @@ export const MultipleConversion = () => {
         message: 'Preparando archivos...',
         startTime: new Date()
       });
-      setShowStats(false);
-      setCompressionStats(null);
     } else if (!isConverting && progressStatus.startTime) {
       // Si la conversión termina y teníamos progreso activo, resetear después de un tiempo
       setTimeout(() => {
-        if (compressionStats) {
-          setShowStats(true);
-        } else {
-          setProgressStatus({
-            total: 0,
-            current: 0,
-            message: '',
-            startTime: null
-          });
-        }
+        setProgressStatus({
+          total: 0,
+          current: 0,
+          message: '',
+          startTime: null
+        });
       }, 500);
     }
-  }, [isConverting, files.length, progressStatus.startTime, compressionStats]);
+  }, [isConverting, files.length, progressStatus.startTime]);
   
   // Escuchar eventos de progreso
   useEffect(() => {
@@ -79,8 +81,7 @@ export const MultipleConversion = () => {
     };
     
     const handleStatsUpdate = (e) => {
-      const { compressionStats: stats } = e.detail;
-      setCompressionStats(stats);
+      // Ya no actualizamos compressionStats aquí porque se maneja en el contexto
     };
     
     document.addEventListener('conversion-progress', handleProgressUpdate);
@@ -92,7 +93,7 @@ export const MultipleConversion = () => {
     };
   }, [progressStatus.startTime]);
 
-  // Reemplazar la función handleConvert original
+  // Función para iniciar conversión (ahora más simple)
   const handleConvert = async () => {
     if (!files.length || isConverting) return;
     
@@ -105,10 +106,8 @@ export const MultipleConversion = () => {
         startTime
       });
       
-      // Usar la función del contexto que activa isConverting
+      // Usar la función del contexto que ya maneja showStats y compressionStats
       await handleConvertMultiple();
-      
-      // El resto del código se ejecutará mediante los efectos que observan isConverting
     } catch (error) {
       console.error('Error durante la conversión múltiple:', error);
       setProgressStatus(prev => ({
@@ -156,13 +155,17 @@ export const MultipleConversion = () => {
   const handleRemove = (index) => {
     const newFiles = files.filter((_, i) => i !== index);
     setFiles(newFiles);
-    if (newFiles.length === 0) setCompressionStats(null);
+    if (newFiles.length === 0) {
+      setCompressionStats(null);
+      setShowStats(false);
+    }
   };
 
   // Función para limpiar imágenes y detalles
   const handleClearAll = () => {
     setFiles([]);
     setCompressionStats(null);
+    setShowStats(false);
   };
 
   const progressPercent = progressStatus.total ? 
@@ -170,7 +173,7 @@ export const MultipleConversion = () => {
 
   // Determinar si la barra de progreso debe mostrarse
   const showProgressBar = isConverting;
-  const isWeb = typeof navigator !== 'undefined' && !navigator.userAgent.includes('Electron') && window.innerWidth > 768;
+  const isWeb = typeof navigator !== 'undefined' && !navigator.userAgent.includes('Electron');
 
   return (
     <>
@@ -226,7 +229,7 @@ export const MultipleConversion = () => {
 
       {/* Tarjeta de información y progreso */}
       <AnimatePresence>
-        {(showProgressBar || (showStats && compressionStats && isWeb)) && (
+        {(showProgressBar || (showStats && compressionStats && isWeb && !isConverting)) && (
           <motion.div 
             className="info-card"
             initial={{ opacity: 0, y: 30 }}
@@ -269,7 +272,7 @@ export const MultipleConversion = () => {
               </motion.div>
             )}
             
-            {showStats && compressionStats && isWeb && (
+            {showStats && compressionStats && isWeb && !isConverting && (
               <motion.div 
                 className="compression-stats-panel"
                 initial={{ opacity: 0, y: 10 }}
