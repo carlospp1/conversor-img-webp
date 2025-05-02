@@ -1,0 +1,130 @@
+/* Reglas responsive para mantener el diseño actual */
+
+/* Pantallas grandes */
+@media screen and (max-width: 1200px) {
+  .container {
+    padding: 10px;
+  }
+  
+  .header-content {
+    padding: 0 10px;
+  }
+}
+
+/* Tablets */
+@media screen and (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    padding: 10px;
+  }
+  
+  .main-nav {
+    margin-top: 10px;
+    width: 100%;
+  }
+  
+  .nav-item {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+  
+  .dropzone {
+    min-height: 180px;
+  }
+  
+  .image-preview {
+    padding: 10px;
+  }
+  
+  .compression-container {
+    height: auto;
+    max-height: 400px;
+  }
+  
+  /* Ajustes para el panel de calidad */
+  .quality-control {
+    position: static;
+    width: 100%;
+    bottom: auto;
+    right: auto;
+    margin-top: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Móviles */
+@media screen and (max-width: 480px) {
+  .header-content {
+    padding: 5px;
+  }
+  
+  .logo {
+    font-size: 18px;
+  }
+  
+  .logo img {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .main-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .nav-item {
+    text-align: center;
+    width: 100%;
+  }
+  
+  .dropzone {
+    min-height: 150px;
+    padding: 10px;
+  }
+  
+  .dropzone-icon {
+    font-size: 40px;
+  }
+  
+  .image-preview-title {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .clear-button {
+    width: 100%;
+  }
+  
+  .compression-row {
+    font-size: 14px;
+  }
+  
+  .global-drop-indicator {
+    font-size: 16px;
+    padding: 10px;
+  }
+  
+  /* Ajustes para botones en móvil */
+  .convert-button {
+    padding: 12px 10px;
+  }
+  
+  /* Ajustes para la vista de comparación */
+  .comparison-container {
+    max-height: 300px;
+  }
+}
+
+/* Pantallas muy pequeñas */
+@media screen and (max-width: 360px) {
+  .compression-row {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+  
+  .compression-row strong {
+    margin-top: 2px;
+  }
+} 
