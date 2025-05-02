@@ -225,7 +225,7 @@ export const MultipleConversion = () => {
 
       {/* Tarjeta de información y progreso */}
       <AnimatePresence>
-        {(showProgressBar || showStats) && (
+        {(showProgressBar || (showStats && compressionStats)) && (
           <motion.div 
             className="info-card"
             initial={{ opacity: 0, y: 30 }}
