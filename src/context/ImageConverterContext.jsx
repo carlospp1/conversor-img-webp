@@ -112,8 +112,13 @@ export const ImageConverterProvider = ({ children }) => {
       // Actualizar progreso antes de descargar
       updateProgress(files.length, 'Generando archivo ZIP...');
       
+      // Generar nombre de archivo con fecha y milisegundos
+      const now = new Date();
+      const pad = (n, l=2) => n.toString().padStart(l, '0');
+      const fileName = `webp_compress_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}${pad(now.getMilliseconds(),3)}.zip`;
+      
       // Descargar el archivo ZIP generado
-      const success = downloadFile(blob, 'imagenes-convertidas.zip');
+      const success = downloadFile(blob, fileName);
       
       // Mantener el estado de conversión activo por un momento para que se pueda ver el mensaje
       setTimeout(() => {
