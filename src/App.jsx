@@ -27,14 +27,12 @@ function AppContent() {
     setPreviewUrls
   } = useImageConverterContext();
 
-  // Limpiar compressionInfo al cambiar de pestaña
   useEffect(() => {
     setCompressionInfo(null);
-    if (activeTab === 'multiple') {
-      setFile(null);
-      setPreviewUrls({ original: null, webp: null });
-    }
-  }, [activeTab, setCompressionInfo, setFile, setPreviewUrls]);
+    setFile(null);
+    setPreviewUrls({ original: null, webp: null });
+    setFiles([]);
+  }, [activeTab]);
 
   // Event listener para pegar imágenes en cualquier parte
   useEffect(() => {
