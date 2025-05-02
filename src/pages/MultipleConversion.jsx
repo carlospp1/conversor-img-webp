@@ -170,7 +170,7 @@ export const MultipleConversion = () => {
 
   // Determinar si la barra de progreso debe mostrarse
   const showProgressBar = isConverting;
-  const isWeb = typeof navigator !== 'undefined' && !navigator.userAgent.includes('Electron');
+  const isWeb = typeof navigator !== 'undefined' && !navigator.userAgent.includes('Electron') && window.innerWidth > 768;
 
   return (
     <>

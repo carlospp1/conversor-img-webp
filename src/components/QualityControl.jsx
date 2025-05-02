@@ -1,6 +1,20 @@
+import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 export const QualityControl = ({ quality, onChange, compressionInfo, onConvert, isConverting, hasFiles }) => {
+  const [isMobile, setIsMobile] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Si no es móvil, el panel siempre está abierto
+  const showPanel = !isMobile || open;
+
   // Función helper para formatear tamaños de archivo
   const formatFileSize = (bytes) => {
     if (!bytes) return '';
@@ -26,82 +40,110 @@ export const QualityControl = ({ quality, onChange, compressionInfo, onConvert, 
   // Función para acortar el nombre del archivo si es muy largo
   const shortenFileName = (fileName, maxLength = 15) => {
     if (!fileName || fileName.length <= maxLength) return fileName;
-    
     const extension = fileName.split('.').pop();
     const name = fileName.substring(0, fileName.length - extension.length - 1);
-    
     if (name.length <= maxLength - 3) return fileName;
-    
     return name.substring(0, maxLength - 3) + '...' + (extension ? '.' + extension : '');
   };
 
   const qualityColor = getQualityColor(quality);
 
   return (
-    <div className="quality-control">
-      <div className="quality-control-header">
-        <div className="quality-text">Calidad de compresión</div>
-        <div className={`quality-value ${qualityColor}`}>{quality}%</div>
-      </div>
-      <input
-        type="range"
-        className={`quality-slider ${qualityColor}`}
-        min="1"
-        max="100"
-        value={quality}
-        onChange={(e) => onChange(Number(e.target.value))}
-        aria-label="Control de calidad"
-      />
-      
-      {compressionInfo && (
-        <AnimatePresence>
-          <motion.div
-            className="compression-summary"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className="compression-row">
-              <span>Nombre:</span> 
-              <strong title={compressionInfo.name}>{shortenFileName(compressionInfo.name)}</strong>
-            </div>
-            <div className="compression-row">
-              <span>Original:</span> 
-              <strong>{formatFileSize(compressionInfo.originalSize)}</strong>
-            </div>
-            <div className="compression-row">
-              <span>WebP:</span> 
-              <strong>{formatFileSize(compressionInfo.compressedSize)}</strong>
-            </div>
-            <div className="compression-row">
-              <span>Ahorro:</span> 
-              <strong className={`savings-${getSavingsColor(compressionInfo.savingsPercent)}`}>
-                {compressionInfo.savingsPercent}%
-              </strong>
-            </div>
-            <div className="compression-row">
-              <span>Dimensiones:</span> 
-              <strong>{compressionInfo.width} × {compressionInfo.height}</strong>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-      )}
-      
-      {/* Botón de convertir/descargar */}
-      {onConvert && (
+    <>
+      {/* Botón flotante solo en móvil */}
+      {isMobile && !open && (
         <button
-          className="convert-button panel-button"
-          onClick={onConvert}
-          disabled={!hasFiles || isConverting}
+          className="quality-fab accent"
+          aria-label="Mostrar control de calidad"
+          onClick={() => setOpen(true)}
         >
-          {isConverting ? 'Procesando...' : (
-            typeof hasFiles === 'number' && hasFiles > 1 ? 
-            `Convertir ${hasFiles} imágenes` : 
-            hasFiles ? 'Convertir a WebP' : 'Selecciona una imagen'
-          )}
+          <span role="img" aria-label="ajustes">⚙️</span>
         </button>
       )}
-    </div>
+      <AnimatePresence>
+        {showPanel && (
+          <motion.div
+            className={`quality-control${isMobile ? ' mobile' : ''}`}
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            style={isMobile ? { position: 'fixed', bottom: '1rem', right: '1rem', width: '90vw', maxWidth: 340, zIndex: 200, paddingTop: '2.2rem' } : {}}
+          >
+            {/* Botón de cerrar solo en móvil */}
+            {isMobile && (
+              <button
+                className="quality-close"
+                aria-label="Cerrar panel de calidad"
+                onClick={() => setOpen(false)}
+              >
+                ✕
+              </button>
+            )}
+            <div className="quality-control-header">
+              <div className="quality-text">Calidad de compresión</div>
+              <div className={`quality-value ${qualityColor}`}>{quality}%</div>
+            </div>
+            <input
+              type="range"
+              className={`quality-slider ${qualityColor}`}
+              min="1"
+              max="100"
+              value={quality}
+              onChange={(e) => onChange(Number(e.target.value))}
+              aria-label="Control de calidad"
+            />
+            {compressionInfo && (
+              <AnimatePresence>
+                <motion.div
+                  className="compression-summary"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className="compression-row">
+                    <span>Nombre:</span> 
+                    <strong title={compressionInfo.name}>{shortenFileName(compressionInfo.name)}</strong>
+                  </div>
+                  <div className="compression-row">
+                    <span>Original:</span> 
+                    <strong>{formatFileSize(compressionInfo.originalSize)}</strong>
+                  </div>
+                  <div className="compression-row">
+                    <span>WebP:</span> 
+                    <strong>{formatFileSize(compressionInfo.compressedSize)}</strong>
+                  </div>
+                  <div className="compression-row">
+                    <span>Ahorro:</span> 
+                    <strong className={`savings-${getSavingsColor(compressionInfo.savingsPercent)}`}>
+                      {compressionInfo.savingsPercent}%
+                    </strong>
+                  </div>
+                  <div className="compression-row">
+                    <span>Dimensiones:</span> 
+                    <strong>{compressionInfo.width} × {compressionInfo.height}</strong>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            )}
+            {/* Botón de convertir/descargar */}
+            {onConvert && (
+              <button
+                className="convert-button panel-button"
+                onClick={onConvert}
+                disabled={!hasFiles || isConverting}
+              >
+                {isConverting ? 'Procesando...' : (
+                  typeof hasFiles === 'number' && hasFiles > 1 ? 
+                  `Convertir ${hasFiles} imágenes` : 
+                  hasFiles ? 'Convertir a WebP' : 'Selecciona una imagen'
+                )}
+              </button>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }; 

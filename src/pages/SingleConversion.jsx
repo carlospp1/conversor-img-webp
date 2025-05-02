@@ -23,7 +23,7 @@ export const SingleConversion = () => {
   // Estado para mostrar el modal de zoom
   const [showZoom, setShowZoom] = useState(false);
   // Detectar entorno web (no Electron)
-  const isWeb = typeof navigator !== 'undefined' && !navigator.userAgent.includes('Electron');
+  const isWeb = typeof navigator !== 'undefined' && !navigator.userAgent.includes('Electron') && window.innerWidth > 768;
 
   // Escuchar el evento de pegado global
   useEffect(() => {
