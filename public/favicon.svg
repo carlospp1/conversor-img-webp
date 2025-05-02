@@ -7,5 +7,5 @@
   <path d="M8 16H24M20 12L24 16L20 20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   
   <!-- Texto "WEBP" -->
-  <text x="16" y="24" font-family="Arial" font-size="6" fill="white" text-anchor="middle">WEBP</text>
+  <text x="16" y="27" font-family="Arial" font-size="6" fill="white" text-anchor="middle">WEBP</text>
 </svg> 
