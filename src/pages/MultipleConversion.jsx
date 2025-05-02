@@ -76,6 +76,11 @@ export const MultipleConversion = () => {
           current: files.length,
           message: `Conversión completada: ${successCount} de ${results.length} imágenes (${totalTimeSeconds}s)`
         }));
+        
+        // Limpiar las imágenes después de 2 segundos
+        setTimeout(() => {
+          setFiles([]);
+        }, 2000);
       } else {
         setProgressStatus(prev => ({
           ...prev,
@@ -124,11 +129,19 @@ export const MultipleConversion = () => {
       <p className="subtitle">Convierte varias imágenes a WebP y descárgalas como ZIP</p>
 
       <QualityControl quality={quality} onChange={setQuality} />
-      <DropZone onFilesDrop={handleFilesDrop} multiple={true} />
-      
-      {files.length > 0 && (
+      {files.length === 0 ? (
+        <DropZone onFilesDrop={handleFilesDrop} multiple={true} />
+      ) : (
         <div className="image-preview">
-          <div className="image-preview-title">Imágenes seleccionadas ({files.length})</div>
+          <div className="image-preview-title">
+            Imágenes seleccionadas ({files.length})
+            <button 
+              className="clear-all-button" 
+              onClick={() => setFiles([])}
+            >
+              Eliminar todas
+            </button>
+          </div>
           <ImagePreview files={files} onRemove={handleRemove} multiple={true} />
         </div>
       )}

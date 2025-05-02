@@ -4,6 +4,13 @@ import { QualityControl } from '../components/QualityControl';
 import { ImagePreview } from '../components/ImagePreview';
 import { useImageConverter } from '../hooks/useImageConverter';
 
+// Función helper para formatear tamaños de archivo
+const formatFileSize = (bytes) => {
+  if (bytes < 1024) return bytes + ' B';
+  else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
+  else return (bytes / 1048576).toFixed(2) + ' MB';
+};
+
 export const SingleConversion = () => {
   const [file, setFile] = useState(null);
   const [isConverting, setIsConverting] = useState(false);
@@ -11,7 +18,7 @@ export const SingleConversion = () => {
     message: ''
   });
   
-  const { quality, setQuality, convertToWebP, downloadFile } = useImageConverter();
+  const { quality, setQuality, convertToWebP, downloadFile, compressionInfo } = useImageConverter();
 
   const handleFilesDrop = (files) => {
     setFile(files[0]);
@@ -75,15 +82,37 @@ export const SingleConversion = () => {
       <h1>Convertidor a WebP</h1>
       <p className="subtitle">Convierte cualquier imagen a formato WebP con un solo clic</p>
 
-      <QualityControl quality={quality} onChange={setQuality} />
-      <DropZone onFilesDrop={handleFilesDrop} />
-      
-      {file && (
+      {!file ? (
+        <DropZone onFilesDrop={handleFilesDrop} />
+      ) : (
         <div className="image-preview">
           <div className="image-preview-title">Vista previa</div>
-          <ImagePreview files={[file]} />
+          <ImagePreview files={[file]} onRemove={() => setFile(null)} />
+          
+          {compressionInfo && (
+            <div className="compression-info">
+              <div className="compression-stat">
+                <span>Tamaño original:</span> 
+                <strong>{formatFileSize(compressionInfo.originalSize)}</strong>
+              </div>
+              <div className="compression-stat">
+                <span>Tamaño WebP estimado:</span> 
+                <strong>{formatFileSize(compressionInfo.compressedSize)}</strong>
+              </div>
+              <div className="compression-stat">
+                <span>Ahorro:</span> 
+                <strong className="savings">{compressionInfo.savingsPercent}%</strong>
+              </div>
+              <div className="compression-stat">
+                <span>Dimensiones:</span> 
+                <strong>{compressionInfo.width} × {compressionInfo.height} px</strong>
+              </div>
+            </div>
+          )}
         </div>
       )}
+
+      <QualityControl quality={quality} onChange={setQuality} />
 
       {isConverting && (
         <div className="progress-container">

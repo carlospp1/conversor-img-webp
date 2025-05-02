@@ -3,6 +3,7 @@ import JSZip from 'jszip';
 
 export const useImageConverter = (initialQuality = 75) => {
   const [quality, setQuality] = useState(initialQuality);
+  const [compressionInfo, setCompressionInfo] = useState(null);
 
   const convertToWebP = async (file) => {
     return new Promise((resolve, reject) => {
@@ -17,6 +18,19 @@ export const useImageConverter = (initialQuality = 75) => {
         
         canvas.toBlob(blob => {
           if (blob) {
+            // Calcular la información de compresión
+            const originalSize = file.size;
+            const compressedSize = blob.size;
+            const savingsPercent = Math.round((1 - (compressedSize / originalSize)) * 100);
+            
+            setCompressionInfo({
+              originalSize,
+              compressedSize,
+              savingsPercent,
+              width: img.width,
+              height: img.height
+            });
+            
             resolve(blob);
           } else {
             reject(new Error('Error al convertir la imagen a WebP'));
@@ -145,6 +159,7 @@ export const useImageConverter = (initialQuality = 75) => {
     setQuality,
     convertToWebP,
     convertMultiple,
-    downloadFile
+    downloadFile,
+    compressionInfo
   };
 }; 
