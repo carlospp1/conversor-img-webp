@@ -85,7 +85,11 @@ export const QualityControl = ({ quality, onChange, compressionInfo, onConvert, 
           onClick={onConvert}
           disabled={!hasFiles || isConverting}
         >
-          {isConverting ? 'Procesando...' : hasFiles ? 'Descargar WebP' : 'Selecciona una imagen'}
+          {isConverting ? 'Procesando...' : (
+            typeof hasFiles === 'number' && hasFiles > 1 ? 
+            `Descargar ${hasFiles} imágenes` : 
+            hasFiles ? 'Descargar WebP' : 'Selecciona una imagen'
+          )}
         </button>
       )}
     </div>

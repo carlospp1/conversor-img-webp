@@ -105,7 +105,6 @@ export const MultipleConversion = () => {
       
       const endTime = new Date();
       const totalTimeSeconds = ((endTime - startTime) / 1000).toFixed(2);
-      const successCount = results.filter(r => r.success).length;
       
       setProgressStatus(prev => ({
         ...prev,
@@ -124,12 +123,6 @@ export const MultipleConversion = () => {
           current: files.length,
           message: `Conversión completada: ${compressionStats.successCount} de ${compressionStats.totalCount} imágenes (${totalTimeSeconds}s)`
         }));
-        
-        // Limpiar las imágenes después de 3 segundos (un poco más de tiempo para ver las estadísticas)
-        setTimeout(() => {
-          setFiles([]);
-          setCompressionStats(null);
-        }, 3000);
       } else {
         setProgressStatus(prev => ({
           ...prev,
@@ -138,15 +131,9 @@ export const MultipleConversion = () => {
         }));
       }
       
-      // Dejamos la barra de progreso visible por 2 segundos antes de resetear
+      // Dejamos la barra de progreso visible pero cambiamos el estado de conversión
       setTimeout(() => {
         setIsConverting(false);
-        setProgressStatus({
-          total: 0,
-          current: 0,
-          message: '',
-          startTime: null
-        });
       }, 2000);
       
     } catch (error) {
@@ -159,12 +146,6 @@ export const MultipleConversion = () => {
       
       setTimeout(() => {
         setIsConverting(false);
-        setProgressStatus({
-          total: 0,
-          current: 0,
-          message: '',
-          startTime: null
-        });
       }, 2000);
     }
   };
@@ -182,7 +163,7 @@ export const MultipleConversion = () => {
         onChange={setQuality}
         onConvert={handleConvert}
         isConverting={isConverting}
-        hasFiles={files.length > 0}
+        hasFiles={files.length}
       />
       
       {isConverting && (
@@ -223,7 +204,10 @@ export const MultipleConversion = () => {
           </div>
           <div className="compression-stats-row">
             <span>Imágenes:</span>
-            <strong>{compressionStats.successCount} / {compressionStats.totalCount}</strong>
+            <strong>{compressionStats.totalCount}</strong>
+          </div>
+          <div className="compression-stats-info">
+            Puedes volver a convertir las mismas imágenes con otra calidad usando el botón en el panel inferior derecho o cargar nuevas haciendo click en "Eliminar todo"
           </div>
         </div>
       )}

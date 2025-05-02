@@ -681,6 +681,17 @@ h1 {
   color: var(--text-color);
 }
 
+.compression-stats-info {
+  grid-column: 1 / -1;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #eee;
+  font-size: 0.75rem;
+  color: var(--text-light);
+  text-align: center;
+  font-style: italic;
+}
+
 /* Botón para añadir más imágenes */
 .add-more-button {
   display: block;
