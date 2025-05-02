@@ -1,3 +1,5 @@
+import { AnimatePresence, motion } from 'framer-motion';
+
 export const QualityControl = ({ quality, onChange, compressionInfo, onConvert, isConverting, hasFiles }) => {
   // Función helper para formatear tamaños de archivo
   const formatFileSize = (bytes) => {
@@ -52,30 +54,38 @@ export const QualityControl = ({ quality, onChange, compressionInfo, onConvert, 
       />
       
       {compressionInfo && (
-        <div className="compression-summary">
-          <div className="compression-row">
-            <span>Nombre:</span> 
-            <strong title={compressionInfo.name}>{shortenFileName(compressionInfo.name)}</strong>
-          </div>
-          <div className="compression-row">
-            <span>Original:</span> 
-            <strong>{formatFileSize(compressionInfo.originalSize)}</strong>
-          </div>
-          <div className="compression-row">
-            <span>WebP:</span> 
-            <strong>{formatFileSize(compressionInfo.compressedSize)}</strong>
-          </div>
-          <div className="compression-row">
-            <span>Ahorro:</span> 
-            <strong className={`savings-${getSavingsColor(compressionInfo.savingsPercent)}`}>
-              {compressionInfo.savingsPercent}%
-            </strong>
-          </div>
-          <div className="compression-row">
-            <span>Dimensiones:</span> 
-            <strong>{compressionInfo.width} × {compressionInfo.height}</strong>
-          </div>
-        </div>
+        <AnimatePresence>
+          <motion.div
+            className="compression-summary"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="compression-row">
+              <span>Nombre:</span> 
+              <strong title={compressionInfo.name}>{shortenFileName(compressionInfo.name)}</strong>
+            </div>
+            <div className="compression-row">
+              <span>Original:</span> 
+              <strong>{formatFileSize(compressionInfo.originalSize)}</strong>
+            </div>
+            <div className="compression-row">
+              <span>WebP:</span> 
+              <strong>{formatFileSize(compressionInfo.compressedSize)}</strong>
+            </div>
+            <div className="compression-row">
+              <span>Ahorro:</span> 
+              <strong className={`savings-${getSavingsColor(compressionInfo.savingsPercent)}`}>
+                {compressionInfo.savingsPercent}%
+              </strong>
+            </div>
+            <div className="compression-row">
+              <span>Dimensiones:</span> 
+              <strong>{compressionInfo.width} × {compressionInfo.height}</strong>
+            </div>
+          </motion.div>
+        </AnimatePresence>
       )}
       
       {/* Botón de convertir/descargar */}
