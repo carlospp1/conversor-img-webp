@@ -97,8 +97,8 @@ export const QualityControl = ({ quality, onChange, compressionInfo, onConvert, 
         >
           {isConverting ? 'Procesando...' : (
             typeof hasFiles === 'number' && hasFiles > 1 ? 
-            `Descargar ${hasFiles} imágenes` : 
-            hasFiles ? 'Descargar WebP' : 'Selecciona una imagen'
+            `Convertir ${hasFiles} imágenes` : 
+            hasFiles ? 'Convertir a WebP' : 'Selecciona una imagen'
           )}
         </button>
       )}

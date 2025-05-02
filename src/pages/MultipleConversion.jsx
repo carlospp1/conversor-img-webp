@@ -22,9 +22,9 @@ const getSavingsColor = (percent) => {
 
 export const MultipleConversion = () => {
   // Usamos archivos desde el contexto
-  const { files, setFiles } = useImageConverterContext();
+  const { files, setFiles, isConverting, handleConvertMultiple } = useImageConverterContext();
   const { quality, setQuality, convertMultiple, downloadFile } = useImageConverter();
-  const [isConverting, setIsConverting] = useState(false);
+  
   const [progressStatus, setProgressStatus] = useState({
     total: 0,
     current: 0,
@@ -32,6 +32,92 @@ export const MultipleConversion = () => {
     startTime: null
   });
   const [compressionStats, setCompressionStats] = useState(null);
+  const [showStats, setShowStats] = useState(false);
+
+  // Observador para isConverting del contexto - para iniciar el progreso
+  useEffect(() => {
+    if (isConverting && !progressStatus.startTime) {
+      // Si la conversión inicia y no tenemos tiempo de inicio, configuramos el progreso
+      setProgressStatus({
+        total: files.length,
+        current: 0,
+        message: 'Preparando archivos...',
+        startTime: new Date()
+      });
+      setShowStats(false);
+      setCompressionStats(null);
+    } else if (!isConverting && progressStatus.startTime) {
+      // Si la conversión termina y teníamos progreso activo, resetear después de un tiempo
+      setTimeout(() => {
+        if (compressionStats) {
+          setShowStats(true);
+        } else {
+          setProgressStatus({
+            total: 0,
+            current: 0,
+            message: '',
+            startTime: null
+          });
+        }
+      }, 500);
+    }
+  }, [isConverting, files.length, progressStatus.startTime, compressionStats]);
+  
+  // Escuchar eventos de progreso
+  useEffect(() => {
+    const handleProgressUpdate = (e) => {
+      const { current, fileName } = e.detail;
+      const now = new Date();
+      const elapsedMs = now - progressStatus.startTime;
+      const imagesPerSecond = current > 0 ? (current / (elapsedMs / 1000)).toFixed(2) : 0;
+      
+      setProgressStatus(prev => ({
+        ...prev,
+        current: current,
+        message: `Convirtiendo ${fileName}...`
+      }));
+    };
+    
+    const handleStatsUpdate = (e) => {
+      const { compressionStats: stats } = e.detail;
+      setCompressionStats(stats);
+    };
+    
+    document.addEventListener('conversion-progress', handleProgressUpdate);
+    document.addEventListener('conversion-stats', handleStatsUpdate);
+    
+    return () => {
+      document.removeEventListener('conversion-progress', handleProgressUpdate);
+      document.removeEventListener('conversion-stats', handleStatsUpdate);
+    };
+  }, [progressStatus.startTime]);
+
+  // Reemplazar la función handleConvert original
+  const handleConvert = async () => {
+    if (!files.length || isConverting) return;
+    
+    try {
+      const startTime = new Date();
+      setProgressStatus({
+        total: files.length,
+        current: 0,
+        message: 'Preparando archivos...',
+        startTime
+      });
+      
+      // Usar la función del contexto que activa isConverting
+      await handleConvertMultiple();
+      
+      // El resto del código se ejecutará mediante los efectos que observan isConverting
+    } catch (error) {
+      console.error('Error durante la conversión múltiple:', error);
+      setProgressStatus(prev => ({
+        ...prev,
+        current: 0,
+        message: `Error en la conversión: ${error.message}`
+      }));
+    }
+  };
 
   // Escuchar el evento de pegado global
   useEffect(() => {
@@ -77,88 +163,6 @@ export const MultipleConversion = () => {
   const handleClearAll = () => {
     setFiles([]);
     setCompressionStats(null);
-  };
-
-  const handleConvert = async () => {
-    if (!files.length || isConverting) return;
-
-    // Limpiar estadísticas previas al iniciar nueva conversión
-    setCompressionStats(null);
-    
-    try {
-      const startTime = new Date();
-      setIsConverting(true);
-      setProgressStatus({
-        total: files.length,
-        current: 0,
-        message: 'Preparando archivos...',
-        startTime
-      });
-
-      // Pequeña pausa para que la UI se actualice
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Función que se llamará durante la conversión para actualizar el progreso
-      const updateProgress = (current, fileName) => {
-        const now = new Date();
-        const elapsedMs = now - progressStatus.startTime;
-        const imagesPerSecond = current > 0 ? (current / (elapsedMs / 1000)).toFixed(2) : 0;
-        
-        setProgressStatus(prev => ({
-          ...prev,
-          current: current,
-          message: `Convirtiendo ${fileName}...`
-        }));
-      };
-
-      const { blob, results, compressionStats } = await convertMultiple(files, updateProgress);
-      
-      setCompressionStats(compressionStats);
-      
-      const endTime = new Date();
-      const totalTimeSeconds = ((endTime - startTime) / 1000).toFixed(2);
-      
-      setProgressStatus(prev => ({
-        ...prev,
-        current: files.length,
-        message: `Generando archivo ZIP... (${totalTimeSeconds}s total)`
-      }));
-      
-      // Pequeña pausa para que la UI se actualice
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      const success = downloadFile(blob, 'imagenes-convertidas.zip');
-      
-      if (success) {
-        // Finalizar la conversión inmediatamente después de descargar
-        setIsConverting(false);
-        
-        setProgressStatus(prev => ({
-          ...prev,
-          current: files.length,
-          message: `Conversión completada: ${compressionStats.successCount} de ${compressionStats.totalCount} imágenes (${totalTimeSeconds}s)`
-        }));
-        
-      } else {
-        setIsConverting(false);
-        
-        setProgressStatus(prev => ({
-          ...prev,
-          current: files.length,
-          message: 'La conversión fue exitosa pero hubo un problema al descargar el ZIP'
-        }));
-      }
-      
-    } catch (error) {
-      console.error('Error durante la conversión múltiple:', error);
-      setIsConverting(false);
-      
-      setProgressStatus(prev => ({
-        ...prev,
-        current: 0,
-        message: `Error en la conversión: ${error.message}`
-      }));
-    }
   };
 
   const progressPercent = progressStatus.total ? 
@@ -221,7 +225,7 @@ export const MultipleConversion = () => {
 
       {/* Tarjeta de información y progreso */}
       <AnimatePresence>
-        {(showProgressBar || compressionStats) && (
+        {(showProgressBar || showStats) && (
           <motion.div 
             className="info-card"
             initial={{ opacity: 0, y: 30 }}
@@ -264,7 +268,7 @@ export const MultipleConversion = () => {
               </motion.div>
             )}
             
-            {compressionStats && (
+            {showStats && compressionStats && (
               <motion.div 
                 className="compression-stats-panel"
                 initial={{ opacity: 0, y: 10 }}
@@ -326,6 +330,7 @@ export const MultipleConversion = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
     </motion.div>
     </>
   );

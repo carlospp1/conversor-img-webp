@@ -87,13 +87,44 @@ export const ImageConverterProvider = ({ children }) => {
     
     try {
       setIsConverting(true);
-      const updateProgress = () => {}; // Función vacía, el progreso se maneja en el componente MultipleConversion
-      const { blob } = await convertMultiple(files, updateProgress);
-      downloadFile(blob, 'imagenes-convertidas.zip');
-      setIsConverting(false);
+      
+      // Función de actualización de progreso
+      const updateProgress = (current, fileName) => {
+        // Este es un evento que MultipleConversion escuchará para actualizar su UI
+        const progressEvent = new CustomEvent('conversion-progress', {
+          detail: { current, fileName }
+        });
+        document.dispatchEvent(progressEvent);
+      };
+      
+      // Pequeña pausa para que la UI se actualice
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Realizar la conversión
+      const { blob, results, compressionStats } = await convertMultiple(files, updateProgress);
+      
+      // Enviar evento de estadísticas finales
+      const statsEvent = new CustomEvent('conversion-stats', {
+        detail: { compressionStats }
+      });
+      document.dispatchEvent(statsEvent);
+      
+      // Actualizar progreso antes de descargar
+      updateProgress(files.length, 'Generando archivo ZIP...');
+      
+      // Descargar el archivo ZIP generado
+      const success = downloadFile(blob, 'imagenes-convertidas.zip');
+      
+      // Mantener el estado de conversión activo por un momento para que se pueda ver el mensaje
+      setTimeout(() => {
+        setIsConverting(false);
+      }, 1500);
+      
+      return { success, compressionStats };
     } catch (error) {
       console.error('Error en conversión múltiple:', error);
       setIsConverting(false);
+      throw error;
     }
   };
 
