@@ -170,6 +170,7 @@ export const MultipleConversion = () => {
 
   // Determinar si la barra de progreso debe mostrarse
   const showProgressBar = isConverting;
+  const isWeb = typeof navigator !== 'undefined' && !navigator.userAgent.includes('Electron');
 
   return (
     <>
@@ -225,7 +226,7 @@ export const MultipleConversion = () => {
 
       {/* Tarjeta de información y progreso */}
       <AnimatePresence>
-        {(showProgressBar || (showStats && compressionStats)) && (
+        {(showProgressBar || (showStats && compressionStats && isWeb)) && (
           <motion.div 
             className="info-card"
             initial={{ opacity: 0, y: 30 }}
@@ -268,7 +269,7 @@ export const MultipleConversion = () => {
               </motion.div>
             )}
             
-            {showStats && compressionStats && (
+            {showStats && compressionStats && isWeb && (
               <motion.div 
                 className="compression-stats-panel"
                 initial={{ opacity: 0, y: 10 }}
