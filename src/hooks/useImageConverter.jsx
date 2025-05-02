@@ -84,6 +84,7 @@ export const useImageConverter = (initialQuality = 75) => {
   };
 
   const convertToWebP = async (file) => {
+    // Si ya tenemos un blob generado, lo usamos
     if (previewBlob && currentFile === file) {
       return previewBlob;
     }

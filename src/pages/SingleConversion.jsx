@@ -96,6 +96,12 @@ export const SingleConversion = () => {
     }
   };
 
+  // Función para borrar la imagen y volver al dropzone
+  const handleResetImage = () => {
+    setFile(null);
+    setCurrentImageFile(null);
+  };
+
   // Limpiar el archivo e información cuando se cierra el componente
   useEffect(() => {
     return () => {
@@ -111,7 +117,16 @@ export const SingleConversion = () => {
       ) : (
         <>
           <div className="image-preview">
-            <div className="image-preview-title">Vista previa</div>
+            <div className="image-preview-title">
+              Vista previa
+              <button 
+                className="reset-image-button" 
+                onClick={handleResetImage}
+                title="Borrar y subir una nueva imagen"
+              >
+                Borrar imagen
+              </button>
+            </div>
             
             {previewUrls?.original && previewUrls?.webp ? (
               <div className="comparison-container">
