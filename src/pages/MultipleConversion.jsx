@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { DropZone } from '../components/DropZone';
 import { QualityControl } from '../components/QualityControl';
 import { ImagePreview } from '../components/ImagePreview';
-import { useImageConverter } from '../hooks/useImageConverter';
+import { useImageConverter } from '../hooks/useImageConverter.js';
 
 // Función helper para formatear tamaños de archivo
 const formatFileSize = (bytes) => {

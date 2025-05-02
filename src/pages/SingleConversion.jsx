@@ -3,7 +3,7 @@ import { DropZone } from '../components/DropZone';
 import { QualityControl } from '../components/QualityControl';
 import { ImagePreview } from '../components/ImagePreview';
 import { ComparisonView } from '../components/ComparisonView';
-import { useImageConverter } from '../hooks/useImageConverter';
+import { useImageConverter } from '../hooks/useImageConverter.js';
 
 // Función helper para formatear tamaños de archivo
 const formatFileSize = (bytes) => {
@@ -25,9 +25,11 @@ export const SingleConversion = () => {
     convertToWebP, 
     downloadFile, 
     compressionInfo, 
+    setCompressionInfo,
     setCurrentImageFile,
     previewBlob,
-    previewUrls
+    previewUrls,
+    setPreviewUrls
   } = useImageConverter();
 
   // Cuando se carga una nueva imagen, actualizar el archivo actual en el hook
@@ -98,8 +100,21 @@ export const SingleConversion = () => {
 
   // Función para borrar la imagen y volver al dropzone
   const handleResetImage = () => {
+    // Limpiar manualmente las URLs para que no se muestre el comparador
+    if (previewUrls?.original) URL.revokeObjectURL(previewUrls.original);
+    if (previewUrls?.webp) URL.revokeObjectURL(previewUrls.webp);
+    
+    // Restablecer directamente las URLs sin usar resetPreviewUrls
+    setPreviewUrls({
+      original: null,
+      webp: null
+    });
+    
+    // Restablecer los estados relacionados con la imagen
     setFile(null);
     setCurrentImageFile(null);
+    setProgressStatus({ message: '' });
+    setCompressionInfo(null);
   };
 
   // Limpiar el archivo e información cuando se cierra el componente

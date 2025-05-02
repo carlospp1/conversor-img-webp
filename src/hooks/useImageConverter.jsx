@@ -251,6 +251,14 @@ export const useImageConverter = (initialQuality = 75) => {
     }
   };
 
+  // Función para restablecer las URLs de vista previa
+  const resetPreviewUrls = () => {
+    setPreviewUrls({
+      original: null,
+      webp: null
+    });
+  };
+
   return {
     quality,
     setQuality,
@@ -260,6 +268,7 @@ export const useImageConverter = (initialQuality = 75) => {
     compressionInfo,
     setCurrentImageFile,
     previewBlob,
-    previewUrls
+    previewUrls,
+    resetPreviewUrls
   };
 }; 
