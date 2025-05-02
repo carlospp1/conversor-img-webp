@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DropZone } from '../components/DropZone';
-import { QualityControl } from '../components/QualityControl';
 import { ImagePreview } from '../components/ImagePreview';
 import { useImageConverter } from '../hooks/useImageConverter.js';
 
@@ -68,7 +67,11 @@ export const MultipleConversion = () => {
   };
 
   const handleRemove = (index) => {
-    setFiles(files.filter((_, i) => i !== index));
+    const newFiles = files.filter((_, i) => i !== index);
+    setFiles(newFiles);
+    if (newFiles.length === 0) {
+      setCompressionStats(null);
+    }
   };
 
   // Función para limpiar imágenes y detalles
@@ -173,13 +176,6 @@ export const MultipleConversion = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <QualityControl 
-        quality={quality} 
-        onChange={setQuality}
-        onConvert={handleConvert}
-        isConverting={isConverting}
-        hasFiles={files.length}
-      />
     </motion.div>
     
     <motion.div 
