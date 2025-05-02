@@ -1,8 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DropZone } from '../components/DropZone';
 import { QualityControl } from '../components/QualityControl';
 import { ImagePreview } from '../components/ImagePreview';
 import { useImageConverter } from '../hooks/useImageConverter';
+
+// Función helper para formatear tamaños de archivo
+const formatFileSize = (bytes) => {
+  if (!bytes) return '';
+  if (bytes < 1024) return bytes + ' B';
+  else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
+  else return (bytes / 1048576).toFixed(2) + ' MB';
+};
+
+// Función para determinar el color del ahorro basado en el porcentaje
+const getSavingsColor = (percent) => {
+  if (percent >= 85) return 'green';
+  if (percent >= 70) return 'yellow';
+  return 'red';
+};
 
 export const MultipleConversion = () => {
   const [files, setFiles] = useState([]);
@@ -13,8 +28,39 @@ export const MultipleConversion = () => {
     message: '',
     startTime: null
   });
+  const [compressionStats, setCompressionStats] = useState(null);
   
   const { quality, setQuality, convertMultiple, downloadFile } = useImageConverter();
+
+  // Escuchar el evento de pegado global
+  useEffect(() => {
+    const handleGlobalPaste = (e) => {
+      if (e.detail.multiple && e.detail.files.length > 0) {
+        setFiles(prevFiles => [...prevFiles, ...e.detail.files]);
+      }
+    };
+
+    document.addEventListener('app-paste', handleGlobalPaste);
+    
+    return () => {
+      document.removeEventListener('app-paste', handleGlobalPaste);
+    };
+  }, []);
+
+  // Escuchar el evento de arrastrar y soltar global
+  useEffect(() => {
+    const handleGlobalDrop = (e) => {
+      if (e.detail.multiple && e.detail.files.length > 0) {
+        setFiles(prevFiles => [...prevFiles, ...e.detail.files]);
+      }
+    };
+
+    document.addEventListener('app-drop', handleGlobalDrop);
+    
+    return () => {
+      document.removeEventListener('app-drop', handleGlobalDrop);
+    };
+  }, []);
 
   const handleFilesDrop = (newFiles) => {
     setFiles([...files, ...newFiles]);
@@ -53,7 +99,9 @@ export const MultipleConversion = () => {
         }));
       };
 
-      const { blob, results } = await convertMultiple(files, updateProgress);
+      const { blob, results, compressionStats } = await convertMultiple(files, updateProgress);
+      
+      setCompressionStats(compressionStats);
       
       const endTime = new Date();
       const totalTimeSeconds = ((endTime - startTime) / 1000).toFixed(2);
@@ -74,13 +122,14 @@ export const MultipleConversion = () => {
         setProgressStatus(prev => ({
           ...prev,
           current: files.length,
-          message: `Conversión completada: ${successCount} de ${results.length} imágenes (${totalTimeSeconds}s)`
+          message: `Conversión completada: ${compressionStats.successCount} de ${compressionStats.totalCount} imágenes (${totalTimeSeconds}s)`
         }));
         
-        // Limpiar las imágenes después de 2 segundos
+        // Limpiar las imágenes después de 3 segundos (un poco más de tiempo para ver las estadísticas)
         setTimeout(() => {
           setFiles([]);
-        }, 2000);
+          setCompressionStats(null);
+        }, 3000);
       } else {
         setProgressStatus(prev => ({
           ...prev,
@@ -130,25 +179,12 @@ export const MultipleConversion = () => {
 
       <QualityControl 
         quality={quality} 
-        onChange={setQuality} 
+        onChange={setQuality}
+        onConvert={handleConvert}
+        isConverting={isConverting}
+        hasFiles={files.length > 0}
       />
-      {files.length === 0 ? (
-        <DropZone onFilesDrop={handleFilesDrop} multiple={true} />
-      ) : (
-        <div className="image-preview">
-          <div className="image-preview-title">
-            Imágenes seleccionadas ({files.length})
-            <button 
-              className="clear-all-button" 
-              onClick={() => setFiles([])}
-            >
-              Eliminar todas
-            </button>
-          </div>
-          <ImagePreview files={files} onRemove={handleRemove} multiple={true} />
-        </div>
-      )}
-
+      
       {isConverting && (
         <div className="progress-container">
           <div className="progress-bar">
@@ -168,17 +204,46 @@ export const MultipleConversion = () => {
         </div>
       )}
 
-      <div className="button-container">
-        <button
-          className="convert-button"
-          onClick={handleConvert}
-          disabled={!files.length || isConverting}
-        >
-          {isConverting 
-            ? `Procesando...` 
-            : `Descargar ${files.length} ${files.length === 1 ? 'imagen' : 'imágenes'} en WebP`}
-        </button>
-      </div>
+      {/* Mostrar estadísticas de compresión si están disponibles */}
+      {compressionStats && (
+        <div className="compression-stats-panel">
+          <div className="compression-stats-row">
+            <span>Original:</span>
+            <strong>{formatFileSize(compressionStats.totalOriginalSize)}</strong>
+          </div>
+          <div className="compression-stats-row">
+            <span>WebP:</span>
+            <strong>{formatFileSize(compressionStats.totalCompressedSize)}</strong>
+          </div>
+          <div className="compression-stats-row">
+            <span>Ahorro:</span>
+            <strong className={`savings-${getSavingsColor(compressionStats.savingsPercent)}`}>
+              {compressionStats.savingsPercent}%
+            </strong>
+          </div>
+          <div className="compression-stats-row">
+            <span>Imágenes:</span>
+            <strong>{compressionStats.successCount} / {compressionStats.totalCount}</strong>
+          </div>
+        </div>
+      )}
+      
+      {files.length === 0 ? (
+        <DropZone onFilesDrop={handleFilesDrop} multiple={true} />
+      ) : (
+        <div className="image-preview">
+          <div className="image-preview-title">
+            Imágenes seleccionadas ({files.length})
+            <button 
+              className="clear-all-button" 
+              onClick={() => setFiles([])}
+            >
+              Eliminar todas
+            </button>
+          </div>
+          <ImagePreview files={files} onRemove={handleRemove} multiple={true} />
+        </div>
+      )}
     </div>
   );
 }; 

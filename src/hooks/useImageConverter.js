@@ -38,7 +38,8 @@ export const useImageConverter = (initialQuality = 75) => {
               compressedSize,
               savingsPercent,
               width: img.width,
-              height: img.height
+              height: img.height,
+              name: file.name
             });
             
             setPreviewBlob(blob);
@@ -94,6 +95,8 @@ export const useImageConverter = (initialQuality = 75) => {
   const convertMultiple = async (files, onProgress) => {
     const zip = new JSZip();
     const results = [];
+    let totalOriginalSize = 0;
+    let totalCompressedSize = 0;
     
     // Configuración para el ZIP con compresión mínima para mayor velocidad
     const zipOptions = {
@@ -121,11 +124,17 @@ export const useImageConverter = (initialQuality = 75) => {
           const blob = await convertToWebP(file);
           const fileName = file.name.split('.').slice(0, -1).join('.') + '.webp';
           
+          // Acumular tamaños para estadísticas
+          totalOriginalSize += file.size;
+          totalCompressedSize += blob.size;
+          
           return {
             index,
             fileName,
             blob,
-            success: true
+            success: true,
+            originalSize: file.size,
+            compressedSize: blob.size
           };
         } catch (error) {
           return {
@@ -159,9 +168,22 @@ export const useImageConverter = (initialQuality = 75) => {
       onProgress(files.length, 'Generando ZIP...');
     }
 
+    // Calcular estadísticas de compresión
+    const savingsPercent = totalOriginalSize > 0 
+      ? Math.round((1 - (totalCompressedSize / totalOriginalSize)) * 100) 
+      : 0;
+
+    const compressionStats = {
+      totalOriginalSize,
+      totalCompressedSize,
+      savingsPercent,
+      successCount: results.filter(r => r.success).length,
+      totalCount: results.length
+    };
+
     // Generar el archivo ZIP con las opciones optimizadas
     const content = await zip.generateAsync(zipOptions);
-    return { blob: content, results };
+    return { blob: content, results, compressionStats };
   };
 
   const downloadFile = (blob, fileName) => {

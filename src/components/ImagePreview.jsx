@@ -55,14 +55,6 @@ export const ImagePreview = ({ files, onRemove, multiple = false }) => {
         alt={file.name}
         className="preview-image"
       />
-      <div className="preview-info">
-        <p className="file-name">
-          {file.name}
-        </p>
-        <p className="file-size">
-          {(file.size / 1024).toFixed(2)} KB
-        </p>
-      </div>
     </div>
   );
 }; 

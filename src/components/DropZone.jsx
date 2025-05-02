@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-export const DropZone = ({ onFilesDrop, multiple = false }) => {
+export const DropZone = ({ onFilesDrop, multiple = false, compact = false }) => {
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
     e.currentTarget.classList.add('active');
@@ -39,7 +39,7 @@ export const DropZone = ({ onFilesDrop, multiple = false }) => {
 
   return (
     <div
-      className="drop-zone"
+      className={`drop-zone ${compact ? 'compact' : ''}`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -47,13 +47,23 @@ export const DropZone = ({ onFilesDrop, multiple = false }) => {
       onPaste={handlePaste}
       tabIndex="0"
     >
-      <img src="/image-icon.svg" alt="Subir imagen" />
-      <div className="drop-zone-text">
-        Arrastra O Pega
-      </div>
-      <div className="drop-zone-hint">
-        (También puedes hacer clic para seleccionar {multiple ? 'archivos' : 'un archivo'})
-      </div>
+      {!compact ? (
+        <>
+          <img src="/image-icon.svg" alt="Subir imagen" />
+          <div className="drop-zone-text">
+            Arrastra O Pega
+          </div>
+          <div className="drop-zone-hint">
+            (También puedes hacer clic para seleccionar {multiple ? 'archivos' : 'un archivo'})
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="drop-zone-text compact">
+            Arrastra más imágenes aquí o haz clic para añadir
+          </div>
+        </>
+      )}
     </div>
   );
 }; 

@@ -1,4 +1,4 @@
-export const QualityControl = ({ quality, onChange, compressionInfo }) => {
+export const QualityControl = ({ quality, onChange, compressionInfo, onConvert, isConverting, hasFiles }) => {
   // Función helper para formatear tamaños de archivo
   const formatFileSize = (bytes) => {
     if (!bytes) return '';
@@ -7,15 +7,43 @@ export const QualityControl = ({ quality, onChange, compressionInfo }) => {
     else return (bytes / 1048576).toFixed(2) + ' MB';
   };
 
+  // Función para determinar el color del slider basado en la calidad
+  const getQualityColor = (quality) => {
+    if (quality >= 65 && quality <= 85) return 'green';
+    if (quality > 85 || (quality >= 45 && quality < 75)) return 'yellow';
+    return 'red';
+  };
+
+  // Función para determinar el color del ahorro basado en el porcentaje
+  const getSavingsColor = (percent) => {
+    if (percent >= 85) return 'green';
+    if (percent >= 70) return 'yellow';
+    return 'red';
+  };
+
+  // Función para acortar el nombre del archivo si es muy largo
+  const shortenFileName = (fileName, maxLength = 15) => {
+    if (!fileName || fileName.length <= maxLength) return fileName;
+    
+    const extension = fileName.split('.').pop();
+    const name = fileName.substring(0, fileName.length - extension.length - 1);
+    
+    if (name.length <= maxLength - 3) return fileName;
+    
+    return name.substring(0, maxLength - 3) + '...' + (extension ? '.' + extension : '');
+  };
+
+  const qualityColor = getQualityColor(quality);
+
   return (
     <div className="quality-control">
       <div className="quality-control-header">
         <div className="quality-text">Calidad de compresión</div>
-        <div className="quality-value">{quality}%</div>
+        <div className={`quality-value ${qualityColor}`}>{quality}%</div>
       </div>
       <input
         type="range"
-        className="quality-slider"
+        className={`quality-slider ${qualityColor}`}
         min="1"
         max="100"
         value={quality}
@@ -26,6 +54,10 @@ export const QualityControl = ({ quality, onChange, compressionInfo }) => {
       {compressionInfo && (
         <div className="compression-summary">
           <div className="compression-row">
+            <span>Nombre:</span> 
+            <strong title={compressionInfo.name}>{shortenFileName(compressionInfo.name)}</strong>
+          </div>
+          <div className="compression-row">
             <span>Original:</span> 
             <strong>{formatFileSize(compressionInfo.originalSize)}</strong>
           </div>
@@ -35,13 +67,26 @@ export const QualityControl = ({ quality, onChange, compressionInfo }) => {
           </div>
           <div className="compression-row">
             <span>Ahorro:</span> 
-            <strong className="savings">{compressionInfo.savingsPercent}%</strong>
+            <strong className={`savings-${getSavingsColor(compressionInfo.savingsPercent)}`}>
+              {compressionInfo.savingsPercent}%
+            </strong>
           </div>
           <div className="compression-row">
             <span>Dimensiones:</span> 
             <strong>{compressionInfo.width} × {compressionInfo.height}</strong>
           </div>
         </div>
+      )}
+      
+      {/* Botón de convertir/descargar */}
+      {onConvert && (
+        <button
+          className="convert-button panel-button"
+          onClick={onConvert}
+          disabled={!hasFiles || isConverting}
+        >
+          {isConverting ? 'Procesando...' : hasFiles ? 'Descargar WebP' : 'Selecciona una imagen'}
+        </button>
       )}
     </div>
   );

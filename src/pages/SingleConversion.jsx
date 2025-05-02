@@ -35,6 +35,36 @@ export const SingleConversion = () => {
     }
   }, [file, setCurrentImageFile]);
 
+  // Escuchar el evento de pegado global
+  useEffect(() => {
+    const handleGlobalPaste = (e) => {
+      if (!e.detail.multiple && e.detail.files.length > 0) {
+        setFile(e.detail.files[0]);
+      }
+    };
+
+    document.addEventListener('app-paste', handleGlobalPaste);
+    
+    return () => {
+      document.removeEventListener('app-paste', handleGlobalPaste);
+    };
+  }, []);
+
+  // Escuchar el evento de arrastrar y soltar global
+  useEffect(() => {
+    const handleGlobalDrop = (e) => {
+      if (!e.detail.multiple && e.detail.files.length > 0) {
+        setFile(e.detail.files[0]);
+      }
+    };
+
+    document.addEventListener('app-drop', handleGlobalDrop);
+    
+    return () => {
+      document.removeEventListener('app-drop', handleGlobalDrop);
+    };
+  }, []);
+
   const handleFilesDrop = (files) => {
     setFile(files[0]);
   };
@@ -114,6 +144,9 @@ export const SingleConversion = () => {
         quality={quality} 
         onChange={setQuality} 
         compressionInfo={compressionInfo}
+        onConvert={handleConvert}
+        isConverting={isConverting}
+        hasFiles={!!file}
       />
       
       {isConverting && (
@@ -129,16 +162,6 @@ export const SingleConversion = () => {
           </div>
         </div>
       )}
-
-      <div className="button-container">
-        <button
-          className="convert-button"
-          onClick={handleConvert}
-          disabled={!file || isConverting}
-        >
-          {isConverting ? 'Descargando...' : 'Descargar WebP'}
-        </button>
-      </div>
     </div>
   );
 }; 
