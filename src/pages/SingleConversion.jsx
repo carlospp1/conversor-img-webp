@@ -76,11 +76,23 @@ export const SingleConversion = () => {
     setCompressionInfo(null);
   };
 
+  // Cerrar modal con Escape
+  useEffect(() => {
+    if (!showZoom) return;
+    const handleEsc = (e) => {
+      if (e.key === 'Escape' || e.key === 'Backspace') setShowZoom(false);
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [showZoom]);
+
   return (
     <>
     {/* Modal de zoom con comparador */}
     {isWeb && (
+      
       <AnimatePresence>
+         
         {showZoom && (
           <motion.div
             className="zoom-backdrop"
@@ -97,21 +109,12 @@ export const SingleConversion = () => {
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               onClick={e => e.stopPropagation()}
             >
+             
               <div className="comparison-container">
                 <ComparisonView 
                   originalImage={previewUrls.original} 
                   convertedImage={previewUrls.webp} 
                 />
-              </div>
-              <div className="button-container" style={{ textAlign: 'center' }}>
-                <motion.button
-                  className="convert-button panel-button"
-                  onClick={() => setShowZoom(false)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Cerrar Zoom
-                </motion.button>
               </div>
             </motion.div>
           </motion.div>
