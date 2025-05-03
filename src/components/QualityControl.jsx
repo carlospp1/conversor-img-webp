@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 export const QualityControl = ({
@@ -12,6 +12,29 @@ export const QualityControl = ({
 }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [open, setOpen] = useState(false);
+  const [showLog, setShowLog] = useState(false);
+  const [logs, setLogs] = useState([]);
+  const logRef = useRef(null);
+  const [debugMode, setDebugMode] = useState(false);
+
+  // Detectar debuger en la URL
+  useEffect(() => {
+    if (window.location.search.includes("debuger=1")) {
+      setDebugMode(true);
+    }
+  }, []);
+
+  // Scroll automático al final del log
+  useEffect(() => {
+    if (showLog && logRef.current) {
+      logRef.current.scrollTop = logRef.current.scrollHeight;
+    }
+  }, [logs, showLog]);
+
+  // Función para agregar logs
+  const addLog = (msg) => {
+    setLogs((prev) => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
+  };
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 768);
@@ -82,6 +105,11 @@ export const QualityControl = ({
     return "Convertir a WebP";
   };
 
+  // --- LOGS EN EVENTOS IMPORTANTES ---
+  useEffect(() => {
+    addLog(`Calidad actual: ${quality}`);
+  }, [quality]);
+
   return (
     <>
       {/* Botón flotante solo en móvil */}
@@ -96,6 +124,94 @@ export const QualityControl = ({
           </span>
         </button>
       )}
+
+      {/* Botón para abrir consola de logs solo en móvil y debugMode */}
+      {isMobile && debugMode && !showLog && (
+        <button
+          style={{
+            position: "fixed",
+            bottom: "5.5rem",
+            right: "1rem",
+            zIndex: 300,
+            background: "#222",
+            color: "#fff",
+            borderRadius: "50%",
+            width: 48,
+            height: 48,
+            fontSize: 24,
+            border: "none",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+          }}
+          onClick={() => setShowLog(true)}
+          aria-label="Abrir consola de logs"
+        >
+          🐞
+        </button>
+      )}
+
+      {/* MODAL DE LOGS */}
+      {isMobile && debugMode && showLog && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: 0,
+            right: 0,
+            left: 0,
+            maxHeight: "60vh",
+            background: "#181818f2",
+            color: "#fff",
+            zIndex: 9999,
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
+            boxShadow: "0 -2px 16px rgba(0,0,0,0.3)",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              padding: 8,
+              borderBottom: "1px solid #333",
+            }}
+          >
+            <span style={{ flex: 1, fontWeight: "bold" }}>Debug Console</span>
+            <button
+              style={{
+                background: "none",
+                color: "#fff",
+                border: "none",
+                fontSize: 24,
+              }}
+              onClick={() => setShowLog(false)}
+              aria-label="Cerrar consola"
+            >
+              ✕
+            </button>
+          </div>
+          <div
+            ref={logRef}
+            style={{
+              flex: 1,
+              overflowY: "auto",
+              fontFamily: "monospace",
+              fontSize: 13,
+              padding: 12,
+              background: "#222",
+              borderBottomLeftRadius: 16,
+              borderBottomRightRadius: 16,
+            }}
+          >
+            {logs.length === 0 ? (
+              <div style={{ opacity: 0.7 }}>No hay logs aún.</div>
+            ) : (
+              logs.map((l, i) => <div key={i}>{l}</div>)
+            )}
+          </div>
+        </div>
+      )}
+
       <AnimatePresence>
         {showPanel && (
           <motion.div
@@ -138,7 +254,17 @@ export const QualityControl = ({
               min="1"
               max="100"
               value={quality}
-              onChange={(e) => onChange(Number(e.target.value))}
+              onChange={(e) => {
+                const newQuality = Number(e.target.value);
+                addLog(`Slider cambiado a: ${newQuality}`);
+                onChange(newQuality);
+              }}
+              onTouchMove={(e) => {
+                if (e.target.value && Number(e.target.value) !== quality) {
+                  addLog(`TouchMove - Calidad: ${e.target.value}`);
+                  onChange(Number(e.target.value));
+                }
+              }}
               aria-label="Control de calidad"
             />
             {compressionInfo && (
