@@ -20,12 +20,12 @@ export const QualityControl = ({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Si hay acciones de conversión en progreso, mantener el panel abierto en móvil
+  // Mantener panel abierto en móvil cuando hay archivos o conversión
   useEffect(() => {
-    if (isConverting && isMobile) {
+    if (isMobile && (isConverting || (hasFiles && compressionInfo))) {
       setOpen(true);
     }
-  }, [isConverting, isMobile]);
+  }, [isConverting, hasFiles, compressionInfo, isMobile]);
 
   // Si no es móvil, el panel siempre está abierto
   const showPanel = !isMobile || open;
@@ -66,6 +66,21 @@ export const QualityControl = ({
   };
 
   const qualityColor = getQualityColor(quality);
+
+  // Texto del botón según el modo (single o multiple)
+  const getButtonText = () => {
+    if (isConverting) return "Procesando...";
+
+    if (!hasFiles) return "Selecciona una imagen";
+
+    if (mode === "multiple") {
+      return typeof hasFiles === "number"
+        ? `Convertir ${hasFiles} imágenes`
+        : "Convertir imágenes";
+    }
+
+    return "Convertir a WebP";
+  };
 
   return (
     <>
@@ -177,13 +192,7 @@ export const QualityControl = ({
                 onClick={onConvert}
                 disabled={!hasFiles || isConverting}
               >
-                {isConverting
-                  ? "Procesando..."
-                  : typeof hasFiles === "number" && hasFiles > 1
-                    ? `Convertir ${hasFiles} imágenes`
-                    : hasFiles
-                      ? "Convertir a WebP"
-                      : "Selecciona una imagen"}
+                {getButtonText()}
               </button>
             )}
           </motion.div>
