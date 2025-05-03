@@ -57,22 +57,6 @@ export const QualityControl = ({
     );
   };
 
-  // Handler específico para cambios de calidad
-  const handleQualityChange = (e) => {
-    const newQuality = Number(e.target.value);
-    console.log(`QualityControl: onChange llamado con ${newQuality}`);
-    if (onChange) {
-      onChange(newQuality);
-    }
-  };
-
-  // Handler para cuando se termina de ajustar
-  const handleQualityChangeComplete = () => {
-    console.log(
-      `QualityControl: Ajuste finalizado, calidad actual: ${quality}`,
-    );
-  };
-
   const qualityColor = getQualityColor(quality);
 
   return (
@@ -131,9 +115,7 @@ export const QualityControl = ({
               min="1"
               max="100"
               value={quality}
-              onChange={handleQualityChange}
-              onMouseUp={handleQualityChangeComplete}
-              onTouchEnd={handleQualityChangeComplete}
+              onChange={(e) => onChange(Number(e.target.value))}
               aria-label="Control de calidad"
             />
             {compressionInfo && (

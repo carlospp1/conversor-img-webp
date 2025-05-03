@@ -4,7 +4,6 @@ import {
   useState,
   useEffect,
   useCallback,
-  useRef,
 } from "react";
 import { useImageConverter } from "../hooks/useImageConverter.js";
 
@@ -13,7 +12,7 @@ const ImageConverterContext = createContext();
 export const ImageConverterProvider = ({ children }) => {
   const {
     quality,
-    setQuality: setConverterQuality,
+    setQuality,
     convertToWebP,
     downloadFile,
     compressionInfo,
@@ -29,17 +28,6 @@ export const ImageConverterProvider = ({ children }) => {
   const [isConverting, setIsConverting] = useState(false);
   const [compressionStats, setCompressionStats] = useState(null);
   const [showStats, setShowStats] = useState(false);
-  const lastQualityRef = useRef(quality);
-
-  // Envolver setQuality para asegurar que se regenera la vista previa
-  const setQuality = useCallback(
-    (newQuality) => {
-      // Actualizar quality en el hook
-      setConverterQuality(newQuality);
-      lastQualityRef.current = newQuality;
-    },
-    [setConverterQuality],
-  );
 
   // Manejar generación de previews como función estable
   const generatePreview = useCallback(
@@ -47,7 +35,6 @@ export const ImageConverterProvider = ({ children }) => {
       if (!fileToConvert) return;
 
       try {
-        // Importante: establecer el archivo actual antes de la conversión
         setCurrentImageFile(fileToConvert);
         const blob = await convertToWebP(fileToConvert);
 
@@ -89,24 +76,7 @@ export const ImageConverterProvider = ({ children }) => {
         cleanupResources();
       }
     };
-  }, [file, generatePreview, cleanupResources, previewUrls?.original]);
-
-  // Efecto nuevo para detectar cambios en quality y volver a generar la vista previa
-  useEffect(() => {
-    // Solo regeneramos si hay un archivo y la calidad cambió
-    if (file && lastQualityRef.current !== quality) {
-      lastQualityRef.current = quality;
-
-      // Pequeño retraso para evitar demasiadas actualizaciones
-      const timeoutId = setTimeout(() => {
-        // Forzar regeneración de la vista previa con la nueva calidad
-        setCurrentImageFile(file);
-        generatePreview(file);
-      }, 100);
-
-      return () => clearTimeout(timeoutId);
-    }
-  }, [quality, file, setCurrentImageFile, generatePreview]);
+  }, [file]);
 
   const handleConvertIndividual = async () => {
     if (!file || isConverting) return;
