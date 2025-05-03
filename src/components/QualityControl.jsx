@@ -2,15 +2,16 @@ import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useImageConverterContext } from "../context/ImageConverterContext";
 
-export const QualityControl = ({
-  quality,
-  onChange,
-  compressionInfo,
-  onConvert,
-  isConverting,
-  hasFiles,
-  mode,
-}) => {
+export const QualityControl = (props) => {
+  const {
+    quality,
+    onChange,
+    compressionInfo,
+    onConvert,
+    isConverting,
+    hasFiles,
+    mode,
+  } = props;
   const { debugMode, logs, addLog } = useImageConverterContext();
   const [isMobile, setIsMobile] = useState(false);
   const [open, setOpen] = useState(false);
@@ -42,10 +43,11 @@ export const QualityControl = ({
   // Si no es móvil, el panel siempre está abierto
   const showPanel = !isMobile || open;
 
-  // Función para agregar logs con tipo
-  const log = (msg, tipo = "otros") => {
-    addLog({ tipo, msg });
-  };
+  // --- LOGS EN EVENTOS IMPORTANTES ---
+  useEffect(() => {
+    // Log cada vez que cambia la calidad
+    addLog({ tipo: "slider", msg: `Calidad actual: ${quality}` });
+  }, [quality, addLog]);
 
   // Función helper para formatear tamaños de archivo
   const formatFileSize = (bytes) => {
@@ -82,6 +84,13 @@ export const QualityControl = ({
     );
   };
 
+  // Filtro de logs
+  const filteredLogs =
+    logFilter === "todos" ? logs : logs.filter((l) => l.tipo === logFilter);
+
+  // Obtener tipos únicos para el selector
+  const tipos = ["todos", ...Array.from(new Set(logs.map((l) => l.tipo)))];
+
   const qualityColor = getQualityColor(quality);
 
   // Texto del botón según el modo (single o multiple)
@@ -99,18 +108,6 @@ export const QualityControl = ({
     return "Convertir a WebP";
   };
 
-  // --- LOGS EN EVENTOS IMPORTANTES ---
-  useEffect(() => {
-    log(`Calidad actual: ${quality}`, "slider");
-  }, [quality]);
-
-  // Filtro de logs
-  const filteredLogs =
-    logFilter === "todos" ? logs : logs.filter((l) => l.tipo === logFilter);
-
-  // Obtener tipos únicos
-  const tipos = ["todos", ...Array.from(new Set(logs.map((l) => l.tipo)))];
-
   return (
     <>
       {/* Botón flotante solo en móvil */}
@@ -127,7 +124,7 @@ export const QualityControl = ({
       )}
 
       {/* Botón para abrir consola de logs solo en móvil y debugMode */}
-      {isMobile && debugMode && !showLog && (
+      {debugMode && !showLog && (
         <button
           style={{
             position: "fixed",
@@ -151,14 +148,14 @@ export const QualityControl = ({
       )}
 
       {/* MODAL DE LOGS */}
-      {isMobile && debugMode && showLog && (
+      {debugMode && showLog && (
         <div
           style={{
             position: "fixed",
             bottom: 0,
             right: 0,
             left: 0,
-            maxHeight: "60vh",
+            maxHeight: "70vh",
             background: "#181818f2",
             color: "#fff",
             zIndex: 9999,
@@ -177,7 +174,9 @@ export const QualityControl = ({
               borderBottom: "1px solid #333",
             }}
           >
-            <span style={{ flex: 1, fontWeight: "bold" }}>Debug Console</span>
+            <span style={{ flex: 1, fontWeight: "bold" }}>
+              Debug Console ({filteredLogs.length})
+            </span>
             <select
               value={logFilter}
               onChange={(e) => setLogFilter(e.target.value)}
@@ -191,7 +190,12 @@ export const QualityControl = ({
             >
               {tipos.map((tipo) => (
                 <option key={tipo} value={tipo}>
-                  {tipo}
+                  {tipo} (
+                  {
+                    logs.filter((l) => tipo === "todos" || l.tipo === tipo)
+                      .length
+                  }
+                  )
                 </option>
               ))}
             </select>
@@ -222,10 +226,78 @@ export const QualityControl = ({
             }}
           >
             {filteredLogs.length === 0 ? (
-              <div style={{ opacity: 0.7 }}>No hay logs aún.</div>
+              <div style={{ opacity: 0.7 }}>No hay logs disponibles.</div>
             ) : (
-              filteredLogs.map((l, i) => <div key={i}>{l.msg}</div>)
+              filteredLogs.map((log, i) => (
+                <div
+                  key={i}
+                  style={{
+                    padding: "4px 0",
+                    borderBottom: "1px solid #333",
+                    color:
+                      log.tipo === "error"
+                        ? "#ff6b6b"
+                        : log.tipo === "conversion"
+                          ? "#63e6be"
+                          : log.tipo === "preview"
+                            ? "#74c0fc"
+                            : log.tipo === "slider"
+                              ? "#ffd43b"
+                              : "#fff",
+                  }}
+                >
+                  <span style={{ opacity: 0.7, marginRight: 6 }}>
+                    [{log.timestamp}]
+                  </span>
+                  <span
+                    style={{
+                      display: "inline-block",
+                      minWidth: 80,
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {log.tipo}:
+                  </span>
+                  <span>{log.msg}</span>
+                </div>
+              ))
             )}
+          </div>
+          <div
+            style={{
+              padding: 8,
+              borderTop: "1px solid #333",
+              display: "flex",
+              justifyContent: "space-between",
+              background: "#333",
+            }}
+          >
+            <button
+              style={{
+                padding: "4px 8px",
+                background: "#444",
+                color: "#fff",
+                border: "none",
+                borderRadius: 4,
+                fontSize: 11,
+              }}
+              onClick={() => setLogFilter("todos")}
+            >
+              Mostrar Todos
+            </button>
+            <button
+              style={{
+                padding: "4px 8px",
+                background: "#444",
+                color: "#fff",
+                border: "none",
+                borderRadius: 4,
+                fontSize: 11,
+              }}
+              onClick={() => setLogFilter("error")}
+            >
+              Solo Errores
+            </button>
           </div>
         </div>
       )}
@@ -274,12 +346,18 @@ export const QualityControl = ({
               value={quality}
               onChange={(e) => {
                 const newQuality = Number(e.target.value);
-                log(`Slider cambiado a: ${newQuality}`, "slider");
+                addLog({
+                  tipo: "slider",
+                  msg: `Slider cambiado a: ${newQuality}`,
+                });
                 onChange(newQuality);
               }}
               onTouchMove={(e) => {
                 if (e.target.value && Number(e.target.value) !== quality) {
-                  log(`TouchMove - Calidad: ${e.target.value}`, "slider");
+                  addLog({
+                    tipo: "slider",
+                    msg: `TouchMove - Calidad: ${e.target.value}`,
+                  });
                   onChange(Number(e.target.value));
                 }
               }}
@@ -315,7 +393,9 @@ export const QualityControl = ({
                   <div className="compression-row">
                     <span>Ahorro:</span>
                     <strong
-                      className={`savings-${getSavingsColor(compressionInfo.savingsPercent)}`}
+                      className={`savings-${getSavingsColor(
+                        compressionInfo.savingsPercent,
+                      )}`}
                     >
                       {compressionInfo.savingsPercent}%
                     </strong>
@@ -333,7 +413,13 @@ export const QualityControl = ({
             {onConvert && (
               <button
                 className="convert-button panel-button"
-                onClick={onConvert}
+                onClick={() => {
+                  addLog({
+                    tipo: "accion",
+                    msg: "Botón de conversión pulsado",
+                  });
+                  onConvert();
+                }}
                 disabled={!hasFiles || isConverting}
               >
                 {getButtonText()}
