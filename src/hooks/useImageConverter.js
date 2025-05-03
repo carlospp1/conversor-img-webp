@@ -28,88 +28,64 @@ export const useImageConverter = (initialQuality = 75) => {
 
   const generatePreview = async (file) => {
     try {
-      // Limpiar URLs previas antes de generar nuevas
-      if (previewUrls.original) URL.revokeObjectURL(previewUrls.original);
-      if (previewUrls.webp) URL.revokeObjectURL(previewUrls.webp);
-
       // Crear URL para la imagen original
       const originalUrl = URL.createObjectURL(file);
 
-      // Devolver una promesa para mejor control
-      return new Promise((resolve, reject) => {
-        const img = new Image();
+      const img = new Image();
 
-        img.onerror = (e) => {
-          console.error("Error cargando la imagen:", e);
-          reject(new Error("Error al cargar la imagen"));
-        };
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
 
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          canvas.width = img.width;
-          canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
 
-          const ctx = canvas.getContext("2d", { willReadFrequently: true });
-          if (!ctx) {
-            reject(new Error("No se pudo obtener el contexto 2D del canvas"));
-            return;
-          }
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              // Calcular la información de compresión
+              const originalSize = file.size;
+              const compressedSize = blob.size;
+              const savingsPercent = Math.round(
+                (1 - compressedSize / originalSize) * 100,
+              );
 
-          ctx.drawImage(img, 0, 0);
+              // Crear URL para la versión WebP
+              const webpUrl = URL.createObjectURL(blob);
 
-          try {
-            canvas.toBlob(
-              (blob) => {
-                if (blob) {
-                  // Calcular la información de compresión
-                  const originalSize = file.size;
-                  const compressedSize = blob.size;
-                  const savingsPercent = Math.round(
-                    (1 - compressedSize / originalSize) * 100,
-                  );
+              // Actualizar URLs de vista previa
+              setPreviewUrls((prev) => {
+                // Limpiar URLs anteriores
+                if (prev.original) URL.revokeObjectURL(prev.original);
+                if (prev.webp) URL.revokeObjectURL(prev.webp);
 
-                  // Crear URL para la versión WebP
-                  const webpUrl = URL.createObjectURL(blob);
+                return {
+                  original: originalUrl,
+                  webp: webpUrl,
+                };
+              });
 
-                  // Actualizar URLs de vista previa
-                  setPreviewUrls({
-                    original: originalUrl,
-                    webp: webpUrl,
-                  });
+              setCompressionInfo({
+                originalSize,
+                compressedSize,
+                savingsPercent,
+                width: img.width,
+                height: img.height,
+                name: file.name,
+              });
 
-                  // Actualizar información de compresión
-                  const compressionData = {
-                    originalSize,
-                    compressedSize,
-                    savingsPercent,
-                    width: img.width,
-                    height: img.height,
-                    name: file.name,
-                  };
+              setPreviewBlob(blob);
+            }
+          },
+          "image/webp",
+          quality / 100,
+        );
+      };
 
-                  setCompressionInfo(compressionData);
-                  setPreviewBlob(blob);
-                  resolve(compressionData);
-                } else {
-                  reject(new Error("No se pudo generar el blob WebP"));
-                }
-              },
-              "image/webp",
-              quality / 100,
-            );
-          } catch (canvasError) {
-            reject(
-              new Error(`Error al convertir canvas: ${canvasError.message}`),
-            );
-          }
-        };
-
-        // Iniciar carga de imagen
-        img.src = originalUrl;
-      });
+      img.src = originalUrl;
     } catch (error) {
       console.error("Error al generar la vista previa:", error);
-      throw error;
     }
   };
 
@@ -301,6 +277,5 @@ export const useImageConverter = (initialQuality = 75) => {
     previewBlob,
     previewUrls,
     setPreviewUrls,
-    generatePreview,
   };
 };
