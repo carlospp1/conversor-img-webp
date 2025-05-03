@@ -12,6 +12,7 @@ export const QualityControl = ({
   const [isMobile, setIsMobile] = useState(false);
   const [open, setOpen] = useState(false);
   const sliderRef = useRef(null);
+  const [localQuality, setLocalQuality] = useState(quality);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 768);
@@ -19,6 +20,11 @@ export const QualityControl = ({
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  // Sincronizar calidad local con la prop
+  useEffect(() => {
+    setLocalQuality(quality);
+  }, [quality]);
 
   // Si no es móvil, el panel siempre está abierto
   const showPanel = !isMobile || open;
@@ -61,12 +67,28 @@ export const QualityControl = ({
   // Manejo específico para el cambio de calidad
   const handleQualityChange = (e) => {
     const newQuality = Number(e.target.value);
+    setLocalQuality(newQuality);
+
+    // Debounce para no sobrecargar con demasiadas actualizaciones
     if (onChange) {
-      onChange(newQuality);
+      if (sliderRef.current && sliderRef.current.debounceTimeout) {
+        clearTimeout(sliderRef.current.debounceTimeout);
+      }
+
+      sliderRef.current.debounceTimeout = setTimeout(() => {
+        onChange(newQuality);
+      }, 50); // Pequeño debounce para mejor rendimiento
     }
   };
 
-  const qualityColor = getQualityColor(quality);
+  // Manejo cuando se suelta el slider
+  const handleQualityChangeEnd = () => {
+    if (onChange && localQuality !== quality) {
+      onChange(localQuality);
+    }
+  };
+
+  const qualityColor = getQualityColor(localQuality);
 
   return (
     <>
@@ -116,7 +138,9 @@ export const QualityControl = ({
             )}
             <div className="quality-control-header">
               <div className="quality-text">Calidad de compresión</div>
-              <div className={`quality-value ${qualityColor}`}>{quality}%</div>
+              <div className={`quality-value ${qualityColor}`}>
+                {localQuality}%
+              </div>
             </div>
             <input
               type="range"
@@ -124,8 +148,10 @@ export const QualityControl = ({
               className={`quality-slider ${qualityColor}`}
               min="1"
               max="100"
-              value={quality}
+              value={localQuality}
               onChange={handleQualityChange}
+              onMouseUp={handleQualityChangeEnd}
+              onTouchEnd={handleQualityChangeEnd}
               aria-label="Control de calidad"
             />
             {compressionInfo && (

@@ -12,7 +12,7 @@ const ImageConverterContext = createContext();
 export const ImageConverterProvider = ({ children }) => {
   const {
     quality,
-    setQuality,
+    setQuality: setConverterQuality,
     convertToWebP,
     downloadFile,
     compressionInfo,
@@ -21,6 +21,7 @@ export const ImageConverterProvider = ({ children }) => {
     setCurrentImageFile,
     previewUrls,
     setPreviewUrls,
+    generatePreview,
   } = useImageConverter();
 
   const [file, setFile] = useState(null);
@@ -29,29 +30,44 @@ export const ImageConverterProvider = ({ children }) => {
   const [compressionStats, setCompressionStats] = useState(null);
   const [showStats, setShowStats] = useState(false);
 
+  // Función mejorada para establecer la calidad
+  const setQuality = useCallback(
+    (newQuality) => {
+      console.log(`Actualizando calidad a: ${newQuality}`);
+      setConverterQuality(newQuality);
+
+      // Si tenemos un archivo actual, regenerar la vista previa con la nueva calidad
+      if (file) {
+        console.log(
+          `Regenerando vista previa para ${file.name} con calidad ${newQuality}%`,
+        );
+        // Pequeño retraso para permitir que la UI se actualice primero
+        setTimeout(() => {
+          setCurrentImageFile(file);
+        }, 50);
+      }
+    },
+    [file, setConverterQuality, setCurrentImageFile],
+  );
+
   // Manejar generación de previews como función estable
-  const generatePreview = useCallback(
+  const generatePreviewWithQuality = useCallback(
     async (fileToConvert) => {
       if (!fileToConvert) return;
 
       try {
+        console.log(
+          `Generando vista previa para ${fileToConvert.name} con calidad ${quality}%`,
+        );
         setCurrentImageFile(fileToConvert);
-        const blob = await convertToWebP(fileToConvert);
-
-        // Almacenar URLs en variables locales primero
-        const originalUrl = URL.createObjectURL(fileToConvert);
-        const webpUrl = URL.createObjectURL(blob);
-
-        // Luego actualizar el estado con ambas URLs a la vez
-        setPreviewUrls({
-          original: originalUrl,
-          webp: webpUrl,
-        });
+        const result = await generatePreview(fileToConvert);
+        console.log(`Vista previa generada:`, result);
+        return result;
       } catch (error) {
         console.error("Error al generar la vista previa:", error);
       }
     },
-    [convertToWebP, setCurrentImageFile, setPreviewUrls],
+    [quality, setCurrentImageFile, generatePreview],
   );
 
   // Manejar limpieza como función estable
@@ -65,7 +81,7 @@ export const ImageConverterProvider = ({ children }) => {
   // Efecto para generar preview cuando cambia file
   useEffect(() => {
     if (file) {
-      generatePreview(file);
+      generatePreviewWithQuality(file);
     } else {
       cleanupResources();
     }
@@ -76,7 +92,24 @@ export const ImageConverterProvider = ({ children }) => {
         cleanupResources();
       }
     };
-  }, [file]);
+  }, [
+    file,
+    generatePreviewWithQuality,
+    cleanupResources,
+    previewUrls?.original,
+  ]);
+
+  // Este efecto se asegura de regenerar la vista previa cuando cambia la calidad
+  useEffect(() => {
+    if (file) {
+      // Usamos setTimeout para evitar múltiples renders simultáneos
+      const timeoutId = setTimeout(() => {
+        generatePreviewWithQuality(file);
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [quality, file, generatePreviewWithQuality]);
 
   const handleConvertIndividual = async () => {
     if (!file || isConverting) return;
@@ -85,7 +118,8 @@ export const ImageConverterProvider = ({ children }) => {
       setIsConverting(true);
       const fileName = file.name.split(".").slice(0, -1).join(".") + ".webp";
       const blob = await convertToWebP(file);
-      downloadFile(blob, fileName);
+      const success = downloadFile(blob, fileName);
+      console.log(`Conversión completada con éxito: ${success}`);
       setTimeout(() => setIsConverting(false), 500);
     } catch (error) {
       console.error("Error en conversión individual:", error);
