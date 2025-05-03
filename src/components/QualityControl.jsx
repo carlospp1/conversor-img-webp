@@ -8,6 +8,7 @@ export const QualityControl = ({
   onConvert,
   isConverting,
   hasFiles,
+  mode,
 }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [open, setOpen] = useState(false);
@@ -18,6 +19,13 @@ export const QualityControl = ({
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  // Si hay acciones de conversión en progreso, mantener el panel abierto en móvil
+  useEffect(() => {
+    if (isConverting && isMobile) {
+      setOpen(true);
+    }
+  }, [isConverting, isMobile]);
 
   // Si no es móvil, el panel siempre está abierto
   const showPanel = !isMobile || open;
