@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import JSZip from "jszip";
 
 export const useImageConverter = (initialQuality = 75) => {
@@ -19,6 +19,11 @@ export const useImageConverter = (initialQuality = 75) => {
     };
   }, []);
 
+  // Un callback para actualizar la calidad
+  const updateQuality = useCallback((newQuality) => {
+    setQuality(newQuality);
+  }, []);
+
   // Efecto para convertir la imagen cuando se carga o cambia la calidad
   useEffect(() => {
     if (currentFile) {
@@ -28,64 +33,95 @@ export const useImageConverter = (initialQuality = 75) => {
 
   const generatePreview = async (file) => {
     try {
+      // Limpiar URLs previas antes de generar nuevas
+      if (previewUrls.original) URL.revokeObjectURL(previewUrls.original);
+      if (previewUrls.webp) URL.revokeObjectURL(previewUrls.webp);
+
+      console.log(`Generando vista previa con calidad: ${quality}%`);
+
       // Crear URL para la imagen original
       const originalUrl = URL.createObjectURL(file);
 
-      const img = new Image();
+      // Devolver una promesa para mejor control
+      return new Promise((resolve, reject) => {
+        const img = new Image();
 
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.width;
-        canvas.height = img.height;
+        img.onerror = (e) => {
+          console.error("Error cargando la imagen:", e);
+          reject(new Error("Error al cargar la imagen"));
+        };
 
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0);
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
 
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              // Calcular la información de compresión
-              const originalSize = file.size;
-              const compressedSize = blob.size;
-              const savingsPercent = Math.round(
-                (1 - compressedSize / originalSize) * 100,
-              );
+          const ctx = canvas.getContext("2d", { willReadFrequently: true });
+          if (!ctx) {
+            reject(new Error("No se pudo obtener el contexto 2D del canvas"));
+            return;
+          }
 
-              // Crear URL para la versión WebP
-              const webpUrl = URL.createObjectURL(blob);
+          ctx.drawImage(img, 0, 0);
 
-              // Actualizar URLs de vista previa
-              setPreviewUrls((prev) => {
-                // Limpiar URLs anteriores
-                if (prev.original) URL.revokeObjectURL(prev.original);
-                if (prev.webp) URL.revokeObjectURL(prev.webp);
+          try {
+            canvas.toBlob(
+              (blob) => {
+                if (blob) {
+                  // Calcular la información de compresión
+                  const originalSize = file.size;
+                  const compressedSize = blob.size;
+                  const savingsPercent = Math.round(
+                    (1 - compressedSize / originalSize) * 100,
+                  );
 
-                return {
-                  original: originalUrl,
-                  webp: webpUrl,
-                };
-              });
+                  // Crear URL para la versión WebP
+                  const webpUrl = URL.createObjectURL(blob);
 
-              setCompressionInfo({
-                originalSize,
-                compressedSize,
-                savingsPercent,
-                width: img.width,
-                height: img.height,
-                name: file.name,
-              });
+                  // Actualizar URLs de vista previa
+                  setPreviewUrls({
+                    original: originalUrl,
+                    webp: webpUrl,
+                  });
 
-              setPreviewBlob(blob);
-            }
-          },
-          "image/webp",
-          quality / 100,
-        );
-      };
+                  // Actualizar información de compresión
+                  const compressionData = {
+                    originalSize,
+                    compressedSize,
+                    savingsPercent,
+                    width: img.width,
+                    height: img.height,
+                    name: file.name,
+                  };
 
-      img.src = originalUrl;
+                  console.log(
+                    "Vista previa generada con éxito:",
+                    compressionData,
+                  );
+
+                  setCompressionInfo(compressionData);
+                  setPreviewBlob(blob);
+                  resolve(compressionData);
+                } else {
+                  reject(new Error("No se pudo generar el blob WebP"));
+                }
+              },
+              "image/webp",
+              quality / 100,
+            );
+          } catch (canvasError) {
+            reject(
+              new Error(`Error al convertir canvas: ${canvasError.message}`),
+            );
+          }
+        };
+
+        // Iniciar carga de imagen
+        img.src = originalUrl;
+      });
     } catch (error) {
       console.error("Error al generar la vista previa:", error);
+      throw error;
     }
   };
 
@@ -129,6 +165,9 @@ export const useImageConverter = (initialQuality = 75) => {
 
   // Función para actualizar el archivo actual
   const setCurrentImageFile = (file) => {
+    if (file !== currentFile) {
+      console.log(`Actualizando archivo actual: ${file?.name}`);
+    }
     setCurrentFile(file);
   };
 
@@ -267,7 +306,7 @@ export const useImageConverter = (initialQuality = 75) => {
 
   return {
     quality,
-    setQuality,
+    setQuality: updateQuality,
     convertToWebP,
     convertMultiple,
     downloadFile,
@@ -277,5 +316,6 @@ export const useImageConverter = (initialQuality = 75) => {
     previewBlob,
     previewUrls,
     setPreviewUrls,
+    generatePreview,
   };
 };

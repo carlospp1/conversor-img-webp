@@ -51,6 +51,91 @@
     margin-top: 15px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
+
+  /* Aseguramos que el input range es clickeable y funciona bien en móvil */
+  .quality-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 12px;
+    width: 100%;
+    border-radius: 6px;
+    cursor: pointer;
+    touch-action: manipulation;
+    z-index: 10;
+    position: relative;
+  }
+
+  .quality-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 28px;
+    height: 28px;
+    background: var(--white);
+    border-radius: 50%;
+    border: 2px solid var(--primary-color);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  }
+
+  .quality-slider::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: var(--white);
+    border-radius: 50%;
+    border: 2px solid var(--primary-color);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Panel flotante en móvil */
+  .quality-control.mobile {
+    background-color: var(--white);
+    position: fixed !important;
+    bottom: 1rem !important;
+    right: 1rem !important;
+    z-index: 200;
+    padding: 1.5rem 1rem 1rem 1rem !important;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+    transition:
+      transform 0.3s ease-out,
+      opacity 0.3s ease-out;
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+  }
+
+  /* Mejora específica para el botón de calidad en móvil */
+  .quality-control.mobile .quality-value {
+    font-size: 1.2rem;
+    padding: 2px 10px;
+    font-weight: bold;
+  }
+
+  /* Estilo específico para los datos de compresión */
+  .quality-control.mobile .compression-summary {
+    margin-top: 15px;
+    background-color: rgba(0, 0, 0, 0.02);
+    padding: 10px;
+    border-radius: 8px;
+  }
+
+  .quality-control.mobile .quality-slider {
+    height: 16px; /* Slider más alto para móvil */
+    margin: 15px 0;
+  }
+
+  .quality-control.mobile .quality-slider::-webkit-slider-thumb {
+    width: 32px;
+    height: 32px;
+    border-width: 3px;
+  }
+
+  .quality-control.mobile .quality-slider::-moz-range-thumb {
+    width: 32px;
+    height: 32px;
+    border-width: 3px;
+  }
 }
 
 /* Móviles */
@@ -114,6 +199,28 @@
   /* Ajustes para la vista de comparación */
   .comparison-container {
     max-height: 300px;
+  }
+
+  /* Botón flotante en móvil */
+  .quality-fab {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 220;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Estilo del botón de conversión en móvil */
+  .quality-control.mobile .convert-button.panel-button {
+    margin-top: 15px;
+    padding: 12px 15px;
+    font-weight: bold;
+    font-size: 1rem;
+    background-color: var(--primary-color);
   }
 }
 
