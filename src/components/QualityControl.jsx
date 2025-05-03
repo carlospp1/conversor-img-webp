@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useImageConverterContext } from "../context/ImageConverterContext";
 
 export const QualityControl = ({
   quality,
@@ -10,19 +11,12 @@ export const QualityControl = ({
   hasFiles,
   mode,
 }) => {
+  const { debugMode, logs, addLog } = useImageConverterContext();
   const [isMobile, setIsMobile] = useState(false);
   const [open, setOpen] = useState(false);
   const [showLog, setShowLog] = useState(false);
-  const [logs, setLogs] = useState([]);
+  const [logFilter, setLogFilter] = useState("todos");
   const logRef = useRef(null);
-  const [debugMode, setDebugMode] = useState(false);
-
-  // Detectar debuger en la URL
-  useEffect(() => {
-    if (window.location.search.includes("debuger=1")) {
-      setDebugMode(true);
-    }
-  }, []);
 
   // Scroll automático al final del log
   useEffect(() => {
@@ -30,11 +24,6 @@ export const QualityControl = ({
       logRef.current.scrollTop = logRef.current.scrollHeight;
     }
   }, [logs, showLog]);
-
-  // Función para agregar logs
-  const addLog = (msg) => {
-    setLogs((prev) => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
-  };
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 768);
@@ -52,6 +41,11 @@ export const QualityControl = ({
 
   // Si no es móvil, el panel siempre está abierto
   const showPanel = !isMobile || open;
+
+  // Función para agregar logs con tipo
+  const log = (msg, tipo = "otros") => {
+    addLog({ tipo, msg });
+  };
 
   // Función helper para formatear tamaños de archivo
   const formatFileSize = (bytes) => {
@@ -107,8 +101,15 @@ export const QualityControl = ({
 
   // --- LOGS EN EVENTOS IMPORTANTES ---
   useEffect(() => {
-    addLog(`Calidad actual: ${quality}`);
+    log(`Calidad actual: ${quality}`, "slider");
   }, [quality]);
+
+  // Filtro de logs
+  const filteredLogs =
+    logFilter === "todos" ? logs : logs.filter((l) => l.tipo === logFilter);
+
+  // Obtener tipos únicos
+  const tipos = ["todos", ...Array.from(new Set(logs.map((l) => l.tipo)))];
 
   return (
     <>
@@ -177,6 +178,23 @@ export const QualityControl = ({
             }}
           >
             <span style={{ flex: 1, fontWeight: "bold" }}>Debug Console</span>
+            <select
+              value={logFilter}
+              onChange={(e) => setLogFilter(e.target.value)}
+              style={{
+                marginRight: 8,
+                background: "#222",
+                color: "#fff",
+                border: "1px solid #444",
+                borderRadius: 4,
+              }}
+            >
+              {tipos.map((tipo) => (
+                <option key={tipo} value={tipo}>
+                  {tipo}
+                </option>
+              ))}
+            </select>
             <button
               style={{
                 background: "none",
@@ -203,10 +221,10 @@ export const QualityControl = ({
               borderBottomRightRadius: 16,
             }}
           >
-            {logs.length === 0 ? (
+            {filteredLogs.length === 0 ? (
               <div style={{ opacity: 0.7 }}>No hay logs aún.</div>
             ) : (
-              logs.map((l, i) => <div key={i}>{l}</div>)
+              filteredLogs.map((l, i) => <div key={i}>{l.msg}</div>)
             )}
           </div>
         </div>
@@ -256,12 +274,12 @@ export const QualityControl = ({
               value={quality}
               onChange={(e) => {
                 const newQuality = Number(e.target.value);
-                addLog(`Slider cambiado a: ${newQuality}`);
+                log(`Slider cambiado a: ${newQuality}`, "slider");
                 onChange(newQuality);
               }}
               onTouchMove={(e) => {
                 if (e.target.value && Number(e.target.value) !== quality) {
-                  addLog(`TouchMove - Calidad: ${e.target.value}`);
+                  log(`TouchMove - Calidad: ${e.target.value}`, "slider");
                   onChange(Number(e.target.value));
                 }
               }}

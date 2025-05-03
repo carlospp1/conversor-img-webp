@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import JSZip from "jszip";
+import { ImageConverterContext } from "../context/ImageConverterContext";
 
 export const useImageConverter = (initialQuality = 75) => {
   const [quality, setQuality] = useState(initialQuality);
@@ -10,6 +11,11 @@ export const useImageConverter = (initialQuality = 75) => {
     original: null,
     webp: null,
   });
+
+  // Acceso a logs globales
+  const context = useContext(ImageConverterContext);
+  const addLog = context?.addLog || (() => {});
+  const debugMode = context?.debugMode;
 
   // Efecto para limpiar las URLs al desmontar
   useEffect(() => {
@@ -22,7 +28,10 @@ export const useImageConverter = (initialQuality = 75) => {
   // Efecto para convertir la imagen cuando se carga o cambia la calidad
   useEffect(() => {
     if (currentFile) {
-      console.log(`Calidad actual: ${quality}, regenerando preview`);
+      addLog({
+        tipo: "slider",
+        msg: `Calidad actual: ${quality}, regenerando preview`,
+      });
       if (quality < 30) {
         alert(`Calidad baja: ${quality}%`);
       } else if (quality > 85) {
@@ -34,7 +43,10 @@ export const useImageConverter = (initialQuality = 75) => {
 
   const generatePreview = async (file) => {
     try {
-      console.log(`Iniciando generatePreview con calidad: ${quality}%`);
+      addLog({
+        tipo: "preview",
+        msg: `Iniciando generatePreview con calidad: ${quality}%`,
+      });
       // Crear URL para la imagen original
       const originalUrl = URL.createObjectURL(file);
 
@@ -42,9 +54,10 @@ export const useImageConverter = (initialQuality = 75) => {
 
       img.onload = () => {
         try {
-          console.log(
-            `Imagen cargada: ${img.width}x${img.height}, procesando...`,
-          );
+          addLog({
+            tipo: "preview",
+            msg: `Imagen cargada: ${img.width}x${img.height}, procesando...`,
+          });
           // Crear un canvas con las dimensiones de la imagen
           const canvas = document.createElement("canvas");
           canvas.width = img.width;
@@ -61,9 +74,10 @@ export const useImageConverter = (initialQuality = 75) => {
           let targetHeight = img.height;
 
           if (img.width > maxDimension || img.height > maxDimension) {
-            console.log(
-              `Imagen grande detectada, redimensionando: ${img.width}x${img.height}`,
-            );
+            addLog({
+              tipo: "preview",
+              msg: `Imagen grande detectada, redimensionando: ${img.width}x${img.height}`,
+            });
             if (img.width > img.height) {
               targetWidth = maxDimension;
               targetHeight = Math.floor(
@@ -88,40 +102,51 @@ export const useImageConverter = (initialQuality = 75) => {
             canvas.width = targetWidth;
             canvas.height = targetHeight;
             ctx.drawImage(scaledCanvas, 0, 0);
-            console.log(
-              `Imagen redimensionada a: ${targetWidth}x${targetHeight}`,
-            );
+            addLog({
+              tipo: "preview",
+              msg: `Imagen redimensionada a: ${targetWidth}x${targetHeight}`,
+            });
           }
 
           // Usar el valor de calidad actual para la conversión
           const currentQuality = quality / 100;
-          console.log(`Aplicando calidad: ${quality}% (${currentQuality})`);
+          addLog({
+            tipo: "preview",
+            msg: `Aplicando calidad: ${quality}% (${currentQuality})`,
+          });
 
           canvas.toBlob(
             (blob) => {
               if (blob) {
-                console.log(
-                  `Blob generado: ${(blob.size / 1024).toFixed(2)} KB`,
-                );
+                addLog({
+                  tipo: "preview",
+                  msg: `Blob generado: ${(blob.size / 1024).toFixed(2)} KB`,
+                });
                 // Verificar que el blob no sea más grande que el original
                 // Si es más grande y la calidad es alta, intentar con menor calidad
                 if (blob.size > file.size && quality > 50) {
-                  console.log(
-                    `Blob más grande que original (${(file.size / 1024).toFixed(2)} KB), reduciendo calidad`,
-                  );
+                  addLog({
+                    tipo: "preview",
+                    msg: `Blob más grande que original (${(file.size / 1024).toFixed(2)} KB), reduciendo calidad`,
+                  });
                   const lowerQuality = Math.max(quality * 0.8, 40);
-                  console.log(`Nueva calidad: ${lowerQuality}%`);
+                  addLog({
+                    tipo: "preview",
+                    msg: `Nueva calidad: ${lowerQuality}%`,
+                  });
                   canvas.toBlob(
                     (newBlob) => {
                       if (newBlob) {
-                        console.log(
-                          `Nuevo blob generado: ${(newBlob.size / 1024).toFixed(2)} KB`,
-                        );
+                        addLog({
+                          tipo: "preview",
+                          msg: `Nuevo blob generado: ${(newBlob.size / 1024).toFixed(2)} KB`,
+                        });
                         procesarBlob(newBlob);
                       } else {
-                        console.log(
-                          `Error al generar blob con calidad reducida, usando original`,
-                        );
+                        addLog({
+                          tipo: "error",
+                          msg: `Error al generar blob con calidad reducida, usando original`,
+                        });
                         procesarBlob(blob); // Usar el original si falla
                       }
                     },
@@ -132,7 +157,10 @@ export const useImageConverter = (initialQuality = 75) => {
                   procesarBlob(blob);
                 }
               } else {
-                console.error("No se pudo generar el blob WebP");
+                addLog({
+                  tipo: "error",
+                  msg: "No se pudo generar el blob WebP",
+                });
                 alert("Error: No se pudo generar la imagen WebP");
               }
             },
@@ -173,49 +201,69 @@ export const useImageConverter = (initialQuality = 75) => {
             });
 
             setPreviewBlob(blob);
+            addLog({
+              tipo: "preview",
+              msg: `Preview listo. Original: ${(originalSize / 1024).toFixed(2)} KB, WebP: ${(compressedSize / 1024).toFixed(2)} KB, ahorro: ${savingsPercent}%`,
+            });
           }
         } catch (error) {
-          console.error("Error al procesar la imagen:", error);
+          addLog({
+            tipo: "error",
+            msg: `Error al procesar la imagen: ${error}`,
+          });
         }
       };
 
       img.onerror = () => {
-        console.error(`Error al cargar la imagen ${file.name}`);
+        addLog({
+          tipo: "error",
+          msg: `Error al cargar la imagen ${file.name}`,
+        });
       };
 
       img.src = originalUrl;
     } catch (error) {
-      console.error("Error al generar la vista previa:", error);
+      addLog({
+        tipo: "error",
+        msg: `Error al generar la vista previa: ${error}`,
+      });
     }
   };
 
   const convertToWebP = async (file) => {
-    // Si ya tenemos un blob generado, lo usamos
     if (previewBlob && currentFile === file) {
+      addLog({
+        tipo: "conversion",
+        msg: `Usando previewBlob cacheado para ${file.name}`,
+      });
       return previewBlob;
     }
-
-    // Si no, generamos uno nuevo
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
         try {
-          // Crear un canvas con las dimensiones de la imagen
+          addLog({
+            tipo: "conversion",
+            msg: `Convirtiendo ${file.name} a WebP con calidad ${quality}`,
+          });
           const canvas = document.createElement("canvas");
           canvas.width = img.width;
           canvas.height = img.height;
 
           const ctx = canvas.getContext("2d");
-          ctx.fillStyle = "#FFFFFF"; // Fondo blanco
+          ctx.fillStyle = "#FFFFFF";
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(img, 0, 0);
 
-          // Optimización para móviles: limitar el tamaño si es muy grande
           const maxDimension = 3000;
           let targetWidth = img.width;
           let targetHeight = img.height;
 
           if (img.width > maxDimension || img.height > maxDimension) {
+            addLog({
+              tipo: "conversion",
+              msg: `Redimensionando para conversión: ${img.width}x${img.height}`,
+            });
             if (img.width > img.height) {
               targetWidth = maxDimension;
               targetHeight = Math.floor(
@@ -225,39 +273,59 @@ export const useImageConverter = (initialQuality = 75) => {
               targetHeight = maxDimension;
               targetWidth = Math.floor(img.width * (maxDimension / img.height));
             }
-
-            // Crear un segundo canvas para el reescalado
             const scaledCanvas = document.createElement("canvas");
             scaledCanvas.width = targetWidth;
             scaledCanvas.height = targetHeight;
-
             const scaledCtx = scaledCanvas.getContext("2d");
             scaledCtx.fillStyle = "#FFFFFF";
             scaledCtx.fillRect(0, 0, targetWidth, targetHeight);
             scaledCtx.drawImage(img, 0, 0, targetWidth, targetHeight);
-
-            // Usar el canvas reescalado
             canvas.width = targetWidth;
             canvas.height = targetHeight;
             ctx.drawImage(scaledCanvas, 0, 0);
+            addLog({
+              tipo: "conversion",
+              msg: `Imagen redimensionada a: ${targetWidth}x${targetHeight}`,
+            });
           }
 
-          // Usar el valor de calidad actual para la conversión
           const currentQuality = quality / 100;
+          addLog({
+            tipo: "conversion",
+            msg: `Calidad para conversión: ${quality}% (${currentQuality})`,
+          });
 
           canvas.toBlob(
             (blob) => {
               if (blob) {
-                // Verificar que el blob no sea más grande que el original
-                // Si es más grande y la calidad es alta, intentar con menor calidad
+                addLog({
+                  tipo: "conversion",
+                  msg: `Blob convertido: ${(blob.size / 1024).toFixed(2)} KB`,
+                });
                 if (blob.size > file.size && quality > 50) {
+                  addLog({
+                    tipo: "conversion",
+                    msg: `Blob más grande que original (${(file.size / 1024).toFixed(2)} KB), reduciendo calidad`,
+                  });
                   const lowerQuality = Math.max(quality * 0.8, 40);
+                  addLog({
+                    tipo: "conversion",
+                    msg: `Nueva calidad: ${lowerQuality}%`,
+                  });
                   canvas.toBlob(
                     (newBlob) => {
                       if (newBlob) {
+                        addLog({
+                          tipo: "conversion",
+                          msg: `Nuevo blob convertido: ${(newBlob.size / 1024).toFixed(2)} KB`,
+                        });
                         resolve(newBlob);
                       } else {
-                        resolve(blob); // Usar el original si falla
+                        addLog({
+                          tipo: "error",
+                          msg: `Error al generar blob con calidad reducida, usando original`,
+                        });
+                        resolve(blob);
                       }
                     },
                     "image/webp",
@@ -267,6 +335,10 @@ export const useImageConverter = (initialQuality = 75) => {
                   resolve(blob);
                 }
               } else {
+                addLog({
+                  tipo: "error",
+                  msg: "Error al convertir la imagen a WebP",
+                });
                 reject(new Error("Error al convertir la imagen a WebP"));
               }
             },
@@ -274,14 +346,20 @@ export const useImageConverter = (initialQuality = 75) => {
             currentQuality,
           );
         } catch (error) {
+          addLog({
+            tipo: "error",
+            msg: `Error al procesar la imagen: ${error}`,
+          });
           reject(new Error(`Error al procesar la imagen: ${error.message}`));
         }
       };
-
       img.onerror = () => {
+        addLog({
+          tipo: "error",
+          msg: `Error al cargar la imagen ${file.name}`,
+        });
         reject(new Error(`Error al cargar la imagen ${file.name}`));
       };
-
       img.src = URL.createObjectURL(file);
     });
   };

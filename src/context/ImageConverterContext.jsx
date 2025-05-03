@@ -28,6 +28,18 @@ export const ImageConverterProvider = ({ children }) => {
   const [isConverting, setIsConverting] = useState(false);
   const [compressionStats, setCompressionStats] = useState(null);
   const [showStats, setShowStats] = useState(false);
+  const [debugMode, setDebugMode] = useState(false);
+  const [logs, setLogs] = useState([]);
+
+  useEffect(() => {
+    if (window.location.search.includes("debuger=1")) {
+      setDebugMode(true);
+    }
+  }, []);
+
+  const addLog = (msg) => {
+    setLogs((prev) => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
+  };
 
   // Manejar generación de previews como función estable
   const generatePreview = useCallback(
@@ -177,6 +189,9 @@ export const ImageConverterProvider = ({ children }) => {
     setCompressionStats,
     showStats,
     setShowStats,
+    debugMode,
+    logs,
+    addLog,
   };
 
   return (
