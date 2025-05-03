@@ -7,7 +7,7 @@ import {
 } from "react";
 import { useImageConverter } from "../hooks/useImageConverter.js";
 
-const ImageConverterContext = createContext();
+export const ImageConverterContext = createContext();
 
 export const ImageConverterProvider = ({ children }) => {
   const {
