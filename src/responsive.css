@@ -51,6 +51,48 @@
     margin-top: 15px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
+
+  /* Aseguramos que el input range es clickeable y funciona bien en móvil */
+  .quality-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 12px;
+    width: 100%;
+    border-radius: 6px;
+    cursor: pointer;
+    touch-action: manipulation;
+    z-index: 10;
+    position: relative;
+  }
+
+  .quality-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    background: var(--white);
+    border-radius: 50%;
+    border: 2px solid var(--primary-color);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Panel flotante en móvil */
+  .quality-control.mobile {
+    background-color: var(--white);
+    position: fixed !important;
+    bottom: 1rem !important;
+    right: 1rem !important;
+    z-index: 200;
+    padding: 1.5rem 1rem 1rem 1rem !important;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+    transition:
+      transform 0.3s ease-out,
+      opacity 0.3s ease-out;
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+  }
 }
 
 /* Móviles */
@@ -114,6 +156,19 @@
   /* Ajustes para la vista de comparación */
   .comparison-container {
     max-height: 300px;
+  }
+
+  /* Botón flotante en móvil */
+  .quality-fab {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 220;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.3);
   }
 }
 

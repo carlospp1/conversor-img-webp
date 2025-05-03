@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 export const QualityControl = ({
@@ -11,6 +11,7 @@ export const QualityControl = ({
 }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [open, setOpen] = useState(false);
+  const sliderRef = useRef(null);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 768);
@@ -55,6 +56,14 @@ export const QualityControl = ({
       "..." +
       (extension ? "." + extension : "")
     );
+  };
+
+  // Manejo específico para el cambio de calidad
+  const handleQualityChange = (e) => {
+    const newQuality = Number(e.target.value);
+    if (onChange) {
+      onChange(newQuality);
+    }
   };
 
   const qualityColor = getQualityColor(quality);
@@ -111,11 +120,12 @@ export const QualityControl = ({
             </div>
             <input
               type="range"
+              ref={sliderRef}
               className={`quality-slider ${qualityColor}`}
               min="1"
               max="100"
               value={quality}
-              onChange={(e) => onChange(Number(e.target.value))}
+              onChange={handleQualityChange}
               aria-label="Control de calidad"
             />
             {compressionInfo && (
