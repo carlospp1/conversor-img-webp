@@ -28,6 +28,10 @@ function AppContent() {
     handleConvertMultiple,
     setCompressionInfo,
     setPreviewUrls,
+    compressionStats,
+    setCompressionStats,
+    showStats,
+    setShowStats,
   } = useImageConverterContext();
 
   useEffect(() => {
@@ -35,6 +39,8 @@ function AppContent() {
     setFile(null);
     setPreviewUrls({ original: null, webp: null });
     setFiles([]);
+    setCompressionStats(null);
+    setShowStats(false);
   }, [activeTab]);
 
   // Event listener para pegar imágenes en cualquier parte

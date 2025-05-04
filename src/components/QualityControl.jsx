@@ -8,6 +8,7 @@ export const QualityControl = ({
   onConvert,
   isConverting,
   hasFiles,
+  mode,
 }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [open, setOpen] = useState(false);
@@ -118,7 +119,7 @@ export const QualityControl = ({
               onChange={(e) => onChange(Number(e.target.value))}
               aria-label="Control de calidad"
             />
-            {compressionInfo && (
+            {compressionInfo && mode === "single" && (
               <AnimatePresence>
                 <motion.div
                   className="compression-summary"
