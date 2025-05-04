@@ -38,11 +38,15 @@ export const ImageConverterProvider = ({ children }) => {
         setCurrentImageFile(fileToConvert);
         const blob = await convertToWebP(fileToConvert);
 
-        // Almacenar URLs en variables locales primero
+        // Limpiar URLs anteriores antes de crear nuevas
+        if (previewUrls?.original) URL.revokeObjectURL(previewUrls.original);
+        if (previewUrls?.webp) URL.revokeObjectURL(previewUrls.webp);
+
+        // Crear nuevas URLs
         const originalUrl = URL.createObjectURL(fileToConvert);
         const webpUrl = URL.createObjectURL(blob);
 
-        // Luego actualizar el estado con ambas URLs a la vez
+        // Actualizar estado
         setPreviewUrls({
           original: originalUrl,
           webp: webpUrl,
@@ -51,7 +55,7 @@ export const ImageConverterProvider = ({ children }) => {
         console.error("Error al generar la vista previa:", error);
       }
     },
-    [convertToWebP, setCurrentImageFile, setPreviewUrls],
+    [convertToWebP, setCurrentImageFile, previewUrls],
   );
 
   // Manejar limpieza como función estable
@@ -60,7 +64,15 @@ export const ImageConverterProvider = ({ children }) => {
     if (previewUrls?.webp) URL.revokeObjectURL(previewUrls.webp);
     setPreviewUrls({ original: null, webp: null });
     setCompressionInfo(null);
-  }, [previewUrls, setPreviewUrls, setCompressionInfo]);
+    setCompressionStats(null);
+    setShowStats(false);
+  }, [
+    previewUrls,
+    setPreviewUrls,
+    setCompressionInfo,
+    setCompressionStats,
+    setShowStats,
+  ]);
 
   // Efecto para generar preview cuando cambia file
   useEffect(() => {
@@ -69,14 +81,14 @@ export const ImageConverterProvider = ({ children }) => {
     } else {
       cleanupResources();
     }
+  }, [file, generatePreview, cleanupResources]);
 
-    // Limpieza al desmontar
+  // Efecto para limpieza al desmontar
+  useEffect(() => {
     return () => {
-      if (!file && previewUrls?.original) {
-        cleanupResources();
-      }
+      cleanupResources();
     };
-  }, [file]);
+  }, [cleanupResources]);
 
   const handleConvertIndividual = async () => {
     if (!file || isConverting) return;
