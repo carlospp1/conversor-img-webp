@@ -181,15 +181,7 @@ function AppContent() {
         <div className="wave"></div>
       </div>
 
-      <QualityControl
-        quality={quality}
-        onChange={setQuality}
-        compressionInfo={compressionInfo}
-        onConvert={handleConvert}
-        isConverting={isConverting}
-        hasFiles={hasFiles}
-        mode={activeTab}
-      />
+      <QualityControl mode={activeTab} />
 
       <header className="header">
         <div className="header-content">

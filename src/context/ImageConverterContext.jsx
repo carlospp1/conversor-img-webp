@@ -90,7 +90,7 @@ export const ImageConverterProvider = ({ children }) => {
         cleanupResources();
       }
     };
-  }, [file]);
+  }, [file, quality]);
 
   const handleConvertIndividual = async () => {
     if (!file || isConverting) return;

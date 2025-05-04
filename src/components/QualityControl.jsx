@@ -1,15 +1,19 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useImageConverterContext } from "../context/ImageConverterContext";
 
-export const QualityControl = ({
-  quality,
-  onChange,
-  compressionInfo,
-  onConvert,
-  isConverting,
-  hasFiles,
-  mode,
-}) => {
+export const QualityControl = ({ mode }) => {
+  const {
+    quality,
+    setQuality,
+    compressionInfo,
+    isConverting,
+    file,
+    files,
+    handleConvertIndividual,
+    handleConvertMultiple,
+  } = useImageConverterContext();
+
   const [isMobile, setIsMobile] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -59,6 +63,9 @@ export const QualityControl = ({
   };
 
   const qualityColor = getQualityColor(quality);
+  const handleConvert =
+    mode === "single" ? handleConvertIndividual : handleConvertMultiple;
+  const hasFiles = mode === "single" ? !!file : files.length;
 
   return (
     <>
@@ -116,7 +123,7 @@ export const QualityControl = ({
               min="1"
               max="100"
               value={quality}
-              onChange={(e) => onChange(Number(e.target.value))}
+              onChange={(e) => setQuality(Number(e.target.value))}
               aria-label="Control de calidad"
             />
             {compressionInfo && mode === "single" && (
@@ -164,21 +171,19 @@ export const QualityControl = ({
               </AnimatePresence>
             )}
             {/* Botón de convertir/descargar */}
-            {onConvert && (
-              <button
-                className="convert-button panel-button"
-                onClick={onConvert}
-                disabled={!hasFiles || isConverting}
-              >
-                {isConverting
-                  ? "Procesando..."
-                  : typeof hasFiles === "number" && hasFiles > 1
-                    ? `Convertir ${hasFiles} imágenes`
-                    : hasFiles
-                      ? "Convertir a WebP"
-                      : "Selecciona una imagen"}
-              </button>
-            )}
+            <button
+              className="convert-button panel-button"
+              onClick={handleConvert}
+              disabled={!hasFiles || isConverting}
+            >
+              {isConverting
+                ? "Procesando..."
+                : typeof hasFiles === "number" && hasFiles > 1
+                  ? `Convertir ${hasFiles} imágenes`
+                  : hasFiles
+                    ? "Convertir a WebP"
+                    : "Selecciona una imagen"}
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
