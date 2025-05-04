@@ -38,11 +38,25 @@ export const ImageConverterProvider = ({ children }) => {
         setCurrentImageFile(fileToConvert);
         const blob = await convertToWebP(fileToConvert);
 
-        // Almacenar URLs en variables locales primero
         const originalUrl = URL.createObjectURL(fileToConvert);
         const webpUrl = URL.createObjectURL(blob);
 
-        // Luego actualizar el estado con ambas URLs a la vez
+        // Obtener dimensiones de la imagen original
+        const img = new window.Image();
+        img.src = originalUrl;
+        img.onload = () => {
+          setCompressionInfo({
+            name: fileToConvert.name,
+            originalSize: fileToConvert.size,
+            compressedSize: blob.size,
+            savingsPercent: Math.round(
+              100 - (blob.size / fileToConvert.size) * 100,
+            ),
+            width: img.width,
+            height: img.height,
+          });
+        };
+
         setPreviewUrls({
           original: originalUrl,
           webp: webpUrl,
@@ -51,7 +65,7 @@ export const ImageConverterProvider = ({ children }) => {
         console.error("Error al generar la vista previa:", error);
       }
     },
-    [convertToWebP, setCurrentImageFile, setPreviewUrls],
+    [convertToWebP, setCurrentImageFile, setPreviewUrls, setCompressionInfo],
   );
 
   // Manejar limpieza como función estable
