@@ -1,30 +1,16 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useImageConverterContext } from "../context/ImageConverterContext";
 
-export const QualityControl = (props) => {
-  const {
-    quality,
-    onChange,
-    compressionInfo,
-    onConvert,
-    isConverting,
-    hasFiles,
-    mode,
-  } = props;
-  const { debugMode, logs, addLog } = useImageConverterContext();
+export const QualityControl = ({
+  quality,
+  onChange,
+  compressionInfo,
+  onConvert,
+  isConverting,
+  hasFiles,
+}) => {
   const [isMobile, setIsMobile] = useState(false);
   const [open, setOpen] = useState(false);
-  const [showLog, setShowLog] = useState(false);
-  const [logFilter, setLogFilter] = useState("todos");
-  const logRef = useRef(null);
-
-  // Scroll automático al final del log
-  useEffect(() => {
-    if (showLog && logRef.current) {
-      logRef.current.scrollTop = logRef.current.scrollHeight;
-    }
-  }, [logs, showLog]);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 768);
@@ -33,21 +19,8 @@ export const QualityControl = (props) => {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Mantener panel abierto en móvil cuando hay archivos o conversión
-  useEffect(() => {
-    if (isMobile && (isConverting || (hasFiles && compressionInfo))) {
-      setOpen(true);
-    }
-  }, [isConverting, hasFiles, compressionInfo, isMobile]);
-
   // Si no es móvil, el panel siempre está abierto
   const showPanel = !isMobile || open;
-
-  // --- LOGS EN EVENTOS IMPORTANTES ---
-  useEffect(() => {
-    // Log cada vez que cambia la calidad
-    addLog({ tipo: "slider", msg: `Calidad actual: ${quality}` });
-  }, [quality, addLog]);
 
   // Función helper para formatear tamaños de archivo
   const formatFileSize = (bytes) => {
@@ -84,29 +57,7 @@ export const QualityControl = (props) => {
     );
   };
 
-  // Filtro de logs
-  const filteredLogs =
-    logFilter === "todos" ? logs : logs.filter((l) => l.tipo === logFilter);
-
-  // Obtener tipos únicos para el selector
-  const tipos = ["todos", ...Array.from(new Set(logs.map((l) => l.tipo)))];
-
   const qualityColor = getQualityColor(quality);
-
-  // Texto del botón según el modo (single o multiple)
-  const getButtonText = () => {
-    if (isConverting) return "Procesando...";
-
-    if (!hasFiles) return "Selecciona una imagen";
-
-    if (mode === "multiple") {
-      return typeof hasFiles === "number"
-        ? `Convertir ${hasFiles} imágenes`
-        : "Convertir imágenes";
-    }
-
-    return "Convertir a WebP";
-  };
 
   return (
     <>
@@ -122,186 +73,6 @@ export const QualityControl = (props) => {
           </span>
         </button>
       )}
-
-      {/* Botón para abrir consola de logs solo en móvil y debugMode */}
-      {debugMode && !showLog && (
-        <button
-          style={{
-            position: "fixed",
-            bottom: "5.5rem",
-            right: "1rem",
-            zIndex: 300,
-            background: "#222",
-            color: "#fff",
-            borderRadius: "50%",
-            width: 48,
-            height: 48,
-            fontSize: 24,
-            border: "none",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-          }}
-          onClick={() => setShowLog(true)}
-          aria-label="Abrir consola de logs"
-        >
-          🐞
-        </button>
-      )}
-
-      {/* MODAL DE LOGS */}
-      {debugMode && showLog && (
-        <div
-          style={{
-            position: "fixed",
-            bottom: 0,
-            right: 0,
-            left: 0,
-            maxHeight: "70vh",
-            background: "#181818f2",
-            color: "#fff",
-            zIndex: 9999,
-            borderTopLeftRadius: 16,
-            borderTopRightRadius: 16,
-            boxShadow: "0 -2px 16px rgba(0,0,0,0.3)",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              padding: 8,
-              borderBottom: "1px solid #333",
-            }}
-          >
-            <span style={{ flex: 1, fontWeight: "bold" }}>
-              Debug Console ({filteredLogs.length})
-            </span>
-            <select
-              value={logFilter}
-              onChange={(e) => setLogFilter(e.target.value)}
-              style={{
-                marginRight: 8,
-                background: "#222",
-                color: "#fff",
-                border: "1px solid #444",
-                borderRadius: 4,
-              }}
-            >
-              {tipos.map((tipo) => (
-                <option key={tipo} value={tipo}>
-                  {tipo} (
-                  {
-                    logs.filter((l) => tipo === "todos" || l.tipo === tipo)
-                      .length
-                  }
-                  )
-                </option>
-              ))}
-            </select>
-            <button
-              style={{
-                background: "none",
-                color: "#fff",
-                border: "none",
-                fontSize: 24,
-              }}
-              onClick={() => setShowLog(false)}
-              aria-label="Cerrar consola"
-            >
-              ✕
-            </button>
-          </div>
-          <div
-            ref={logRef}
-            style={{
-              flex: 1,
-              overflowY: "auto",
-              fontFamily: "monospace",
-              fontSize: 13,
-              padding: 12,
-              background: "#222",
-              borderBottomLeftRadius: 16,
-              borderBottomRightRadius: 16,
-            }}
-          >
-            {filteredLogs.length === 0 ? (
-              <div style={{ opacity: 0.7 }}>No hay logs disponibles.</div>
-            ) : (
-              filteredLogs.map((log, i) => (
-                <div
-                  key={i}
-                  style={{
-                    padding: "4px 0",
-                    borderBottom: "1px solid #333",
-                    color:
-                      log.tipo === "error"
-                        ? "#ff6b6b"
-                        : log.tipo === "conversion"
-                          ? "#63e6be"
-                          : log.tipo === "preview"
-                            ? "#74c0fc"
-                            : log.tipo === "slider"
-                              ? "#ffd43b"
-                              : "#fff",
-                  }}
-                >
-                  <span style={{ opacity: 0.7, marginRight: 6 }}>
-                    [{log.timestamp}]
-                  </span>
-                  <span
-                    style={{
-                      display: "inline-block",
-                      minWidth: 80,
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {log.tipo}:
-                  </span>
-                  <span>{log.msg}</span>
-                </div>
-              ))
-            )}
-          </div>
-          <div
-            style={{
-              padding: 8,
-              borderTop: "1px solid #333",
-              display: "flex",
-              justifyContent: "space-between",
-              background: "#333",
-            }}
-          >
-            <button
-              style={{
-                padding: "4px 8px",
-                background: "#444",
-                color: "#fff",
-                border: "none",
-                borderRadius: 4,
-                fontSize: 11,
-              }}
-              onClick={() => setLogFilter("todos")}
-            >
-              Mostrar Todos
-            </button>
-            <button
-              style={{
-                padding: "4px 8px",
-                background: "#444",
-                color: "#fff",
-                border: "none",
-                borderRadius: 4,
-                fontSize: 11,
-              }}
-              onClick={() => setLogFilter("error")}
-            >
-              Solo Errores
-            </button>
-          </div>
-        </div>
-      )}
-
       <AnimatePresence>
         {showPanel && (
           <motion.div
@@ -344,23 +115,7 @@ export const QualityControl = (props) => {
               min="1"
               max="100"
               value={quality}
-              onChange={(e) => {
-                const newQuality = Number(e.target.value);
-                addLog({
-                  tipo: "slider",
-                  msg: `Slider cambiado a: ${newQuality}`,
-                });
-                onChange(newQuality);
-              }}
-              onTouchMove={(e) => {
-                if (e.target.value && Number(e.target.value) !== quality) {
-                  addLog({
-                    tipo: "slider",
-                    msg: `TouchMove - Calidad: ${e.target.value}`,
-                  });
-                  onChange(Number(e.target.value));
-                }
-              }}
+              onChange={(e) => onChange(Number(e.target.value))}
               aria-label="Control de calidad"
             />
             {compressionInfo && (
@@ -393,9 +148,7 @@ export const QualityControl = (props) => {
                   <div className="compression-row">
                     <span>Ahorro:</span>
                     <strong
-                      className={`savings-${getSavingsColor(
-                        compressionInfo.savingsPercent,
-                      )}`}
+                      className={`savings-${getSavingsColor(compressionInfo.savingsPercent)}`}
                     >
                       {compressionInfo.savingsPercent}%
                     </strong>
@@ -413,16 +166,16 @@ export const QualityControl = (props) => {
             {onConvert && (
               <button
                 className="convert-button panel-button"
-                onClick={() => {
-                  addLog({
-                    tipo: "accion",
-                    msg: "Botón de conversión pulsado",
-                  });
-                  onConvert();
-                }}
+                onClick={onConvert}
                 disabled={!hasFiles || isConverting}
               >
-                {getButtonText()}
+                {isConverting
+                  ? "Procesando..."
+                  : typeof hasFiles === "number" && hasFiles > 1
+                    ? `Convertir ${hasFiles} imágenes`
+                    : hasFiles
+                      ? "Convertir a WebP"
+                      : "Selecciona una imagen"}
               </button>
             )}
           </motion.div>
