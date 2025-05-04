@@ -55,7 +55,7 @@ export const ImageConverterProvider = ({ children }) => {
         console.error("Error al generar la vista previa:", error);
       }
     },
-    [convertToWebP, setCurrentImageFile, previewUrls],
+    [convertToWebP, setCurrentImageFile],
   );
 
   // Manejar limpieza como función estable
@@ -66,13 +66,7 @@ export const ImageConverterProvider = ({ children }) => {
     setCompressionInfo(null);
     setCompressionStats(null);
     setShowStats(false);
-  }, [
-    previewUrls,
-    setPreviewUrls,
-    setCompressionInfo,
-    setCompressionStats,
-    setShowStats,
-  ]);
+  }, []);
 
   // Efecto para generar preview cuando cambia file
   useEffect(() => {
@@ -81,14 +75,14 @@ export const ImageConverterProvider = ({ children }) => {
     } else {
       cleanupResources();
     }
-  }, [file, generatePreview, cleanupResources]);
+  }, [file]);
 
   // Efecto para limpieza al desmontar
   useEffect(() => {
     return () => {
       cleanupResources();
     };
-  }, [cleanupResources]);
+  }, []);
 
   const handleConvertIndividual = async () => {
     if (!file || isConverting) return;
