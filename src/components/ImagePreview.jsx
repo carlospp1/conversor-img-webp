@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import html2canvas from "html2canvas";
+import { useImageConverterContext } from "../context/ImageConverterContext";
 
 // Funciones de utilidad para el efecto Thanos
 const delay = (ms) => {
@@ -113,71 +114,7 @@ const playThanosEffect = async (
 };
 
 export const ImagePreview = ({ files, onRemove, multiple = false }) => {
-  const [effectEl, setEffectEl] = useState(null);
-  const effectContainerRef = useRef(null);
-
-  useEffect(() => {
-    // Crear el contenedor del efecto si no existe
-    if (!effectEl && typeof document !== "undefined") {
-      const el =
-        document.getElementById("thanos-effect") ||
-        document.createElement("div");
-      el.id = "thanos-effect";
-      el.style.position = "absolute";
-      el.style.pointerEvents = "none";
-      el.style.textAlign = "center";
-      el.style.zIndex = "9999";
-
-      if (!document.getElementById("thanos-effect")) {
-        document.body.appendChild(el);
-      }
-
-      setEffectEl(el);
-      effectContainerRef.current = el;
-    }
-
-    return () => {
-      // Limpiar el contenedor cuando el componente se desmonte
-      if (effectEl && !document.body.contains(effectEl)) {
-        try {
-          document.body.removeChild(effectEl);
-        } catch (e) {
-          // El elemento ya podría haber sido removido
-        }
-      }
-    };
-  }, [effectEl]);
-
-  const handleRemoveWithEffect = (index, targetEl) => {
-    if (effectContainerRef.current && targetEl) {
-      // Hacer visible el contenedor de efecto
-      const container = effectContainerRef.current;
-      container.innerHTML = "";
-
-      // Primero capturar la imagen original antes de cualquier cambio
-      html2canvas(targetEl, {
-        backgroundColor: "white",
-        removeContainer: false,
-      })
-        .then((canvas) => {
-          // Añadir un fondo blanco a la imagen para evitar transparencias
-          const context = canvas.getContext("2d");
-
-          // Luego aplicar el efecto Thanos (después de capturar la imagen)
-          playThanosEffect(targetEl, container, canvas, () => {
-            // Llamar a onRemove después de que termine el efecto
-            onRemove(index);
-          });
-        })
-        .catch((err) => {
-          console.error("Error al capturar imagen para efecto:", err);
-          onRemove(index); // Si falla, eliminar normalmente
-        });
-    } else {
-      // Si no hay efecto, simplemente eliminar
-      onRemove(index);
-    }
-  };
+  const { handleRemoveWithEffect } = useImageConverterContext();
 
   if (!files?.length) return null;
 
@@ -191,7 +128,7 @@ export const ImagePreview = ({ files, onRemove, multiple = false }) => {
                 className="remove-button"
                 onClick={(e) => {
                   const targetEl = e.currentTarget.parentNode;
-                  handleRemoveWithEffect(index, targetEl);
+                  handleRemoveWithEffect(index, targetEl, onRemove);
                 }}
                 aria-label="Eliminar imagen"
               >
@@ -222,7 +159,7 @@ export const ImagePreview = ({ files, onRemove, multiple = false }) => {
           className="remove-button"
           onClick={(e) => {
             const targetEl = e.currentTarget.parentNode;
-            handleRemoveWithEffect(0, targetEl);
+            handleRemoveWithEffect(0, targetEl, onRemove);
           }}
           aria-label="Eliminar imagen"
         >

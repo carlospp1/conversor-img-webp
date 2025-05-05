@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DropZone } from "../components/DropZone";
 import { ImagePreview } from "../components/ImagePreview";
-import { useImageConverter } from "../hooks/useImageConverter.js";
 import { useImageConverterContext } from "../context/ImageConverterContext.jsx";
 
 // Función helper para formatear tamaños de archivo
@@ -28,97 +27,13 @@ export const MultipleConversion = () => {
     isConverting,
     handleConvertMultiple,
     compressionStats,
-    setCompressionStats,
     showStats,
-    setShowStats,
+    progressStatus,
+    formatFileSize,
+    getSavingsColor,
+    handleClearAll,
+    handleRemoveFile,
   } = useImageConverterContext();
-
-  const { quality, setQuality, convertMultiple, downloadFile } =
-    useImageConverter();
-
-  const [progressStatus, setProgressStatus] = useState({
-    total: 0,
-    current: 0,
-    message: "",
-    startTime: null,
-  });
-
-  // Observador para isConverting del contexto - para iniciar el progreso
-  useEffect(() => {
-    if (isConverting && !progressStatus.startTime) {
-      // Si la conversión inicia y no tenemos tiempo de inicio, configuramos el progreso
-      setProgressStatus({
-        total: files.length,
-        current: 0,
-        message: "Preparando archivos...",
-        startTime: new Date(),
-      });
-    } else if (!isConverting && progressStatus.startTime) {
-      // Si la conversión termina y teníamos progreso activo, resetear después de un tiempo
-      setTimeout(() => {
-        setProgressStatus({
-          total: 0,
-          current: 0,
-          message: "",
-          startTime: null,
-        });
-      }, 500);
-    }
-  }, [isConverting, files.length, progressStatus.startTime]);
-
-  // Escuchar eventos de progreso
-  useEffect(() => {
-    const handleProgressUpdate = (e) => {
-      const { current, fileName } = e.detail;
-      const now = new Date();
-      const elapsedMs = now - progressStatus.startTime;
-      const imagesPerSecond =
-        current > 0 ? (current / (elapsedMs / 1000)).toFixed(2) : 0;
-
-      setProgressStatus((prev) => ({
-        ...prev,
-        current: current,
-        message: `Convirtiendo ${fileName}...`,
-      }));
-    };
-
-    const handleStatsUpdate = (e) => {
-      // Ya no actualizamos compressionStats aquí porque se maneja en el contexto
-    };
-
-    document.addEventListener("conversion-progress", handleProgressUpdate);
-    document.addEventListener("conversion-stats", handleStatsUpdate);
-
-    return () => {
-      document.removeEventListener("conversion-progress", handleProgressUpdate);
-      document.removeEventListener("conversion-stats", handleStatsUpdate);
-    };
-  }, [progressStatus.startTime]);
-
-  // Función para iniciar conversión (ahora más simple)
-  const handleConvert = async () => {
-    if (!files.length || isConverting) return;
-
-    try {
-      const startTime = new Date();
-      setProgressStatus({
-        total: files.length,
-        current: 0,
-        message: "Preparando archivos...",
-        startTime,
-      });
-
-      // Usar la función del contexto que ya maneja showStats y compressionStats
-      await handleConvertMultiple();
-    } catch (error) {
-      console.error("Error durante la conversión múltiple:", error);
-      setProgressStatus((prev) => ({
-        ...prev,
-        current: 0,
-        message: `Error en la conversión: ${error.message}`,
-      }));
-    }
-  };
 
   // Escuchar el evento de pegado global
   useEffect(() => {
@@ -152,22 +67,6 @@ export const MultipleConversion = () => {
 
   const handleFilesDrop = (newFiles) => {
     setFiles((prev) => [...prev, ...newFiles]);
-  };
-
-  const handleRemove = (index) => {
-    const newFiles = files.filter((_, i) => i !== index);
-    setFiles(newFiles);
-    if (newFiles.length === 0) {
-      setCompressionStats(null);
-      setShowStats(false);
-    }
-  };
-
-  // Función para limpiar imágenes y detalles
-  const handleClearAll = () => {
-    setFiles([]);
-    setCompressionStats(null);
-    setShowStats(false);
   };
 
   const progressPercent = progressStatus.total
@@ -227,7 +126,7 @@ export const MultipleConversion = () => {
               </div>
               <ImagePreview
                 files={files}
-                onRemove={handleRemove}
+                onRemove={handleRemoveFile}
                 multiple={true}
               />
             </motion.div>

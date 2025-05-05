@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DropZone } from "../components/DropZone";
 import { ImagePreview } from "../components/ImagePreview";
@@ -13,10 +13,15 @@ const formatFileSize = (bytes) => {
 };
 
 export const SingleConversion = () => {
-  const { file, setFile, previewUrls, setPreviewUrls, setCompressionInfo } =
-    useImageConverterContext();
-  // Estado para mostrar el modal de zoom
-  const [showZoom, setShowZoom] = useState(false);
+  const {
+    file,
+    setFile,
+    previewUrls,
+    showZoom,
+    setShowZoom,
+    handleResetImage,
+  } = useImageConverterContext();
+
   // Detectar entorno web (no Electron)
   const isWeb =
     typeof navigator !== "undefined" &&
@@ -56,33 +61,6 @@ export const SingleConversion = () => {
   const handleFilesDrop = (files) => {
     setFile(files[0]);
   };
-
-  // Función para borrar la imagen y volver al dropzone
-  const handleResetImage = () => {
-    // Limpiar manualmente las URLs para que no se muestre el comparador
-    if (previewUrls?.original) URL.revokeObjectURL(previewUrls.original);
-    if (previewUrls?.webp) URL.revokeObjectURL(previewUrls.webp);
-
-    // Restablecer directamente las URLs sin usar resetPreviewUrls
-    setPreviewUrls({
-      original: null,
-      webp: null,
-    });
-
-    // Restablecer los estados relacionados con la imagen
-    setFile(null);
-    setCompressionInfo(null);
-  };
-
-  // Cerrar modal con Escape
-  useEffect(() => {
-    if (!showZoom) return;
-    const handleEsc = (e) => {
-      if (e.key === "Escape" || e.key === "Backspace") setShowZoom(false);
-    };
-    window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
-  }, [showZoom]);
 
   return (
     <>
